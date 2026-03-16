@@ -25,7 +25,7 @@ class TransformersClient:
             cfg.model_path,
             trust_remote_code=cfg.trust_remote_code,
         )
-        self.tok.padding_side = "right"
+        self.tok.padding_side = "left"   # decoder-only: pad on the left so all sequences end together
         if self.tok.pad_token_id is None:
             self.tok.pad_token = self.tok.eos_token
 

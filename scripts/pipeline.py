@@ -76,10 +76,11 @@ def main() -> int:
         df = df.head(args.n_rows).copy()
         print(f"[n_rows] Subsetting to first {args.n_rows} rows")
 
-    # --- Prepare output columns ---
+    # --- Prepare output columns (dtypes must match what parse_output returns) ---
+    col_dtypes = {"CRITIC": "boolean"}  # bool column; all others are string
     for col in OUTPUT_COLS:
         if col not in df.columns:
-            df[col] = pd.Series(pd.NA, index=df.index, dtype="string")
+            df[col] = pd.Series(pd.NA, index=df.index, dtype=col_dtypes.get(col, "string"))
 
     # --- Init client ---
     client = TransformersClient(
