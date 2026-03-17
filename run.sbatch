@@ -63,7 +63,7 @@ python scripts/pipeline.py \
   --input             "$INPUT" \
   --output_base       "$OUTPUT_BASE" \
   --text_col          "$TEXT_COL" \
-  --n_rows            "$N_ROWS" \
+  --n_rows            "1000" \
   --model_path        "$MODEL_PATH" \
   --dtype             "$DTYPE" \
   --trust_remote_code \
