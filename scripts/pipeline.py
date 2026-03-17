@@ -55,7 +55,8 @@ def main() -> int:
 
     # --- Model ---
     ap.add_argument("--model_path",        required=True)
-    ap.add_argument("--dtype",             required=True, choices=["bf16", "fp16"])
+    ap.add_argument("--dtype",             required=True, choices=["bf16", "fp16", "auto"])
+    ap.add_argument("--backend",           default="transformers", choices=["vllm", "transformers"])
     ap.add_argument("--trust_remote_code", action="store_true")
 
     # --- Inference ---
@@ -88,6 +89,7 @@ def main() -> int:
             model_path=args.model_path,
             dtype=args.dtype,
             trust_remote_code=args.trust_remote_code,
+            backend=args.backend,
         )
     )
 

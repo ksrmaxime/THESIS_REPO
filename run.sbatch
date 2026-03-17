@@ -28,7 +28,8 @@ N_ROWS=0
 
 # Model
 MODEL_PATH=/work/FAC/FDCA/IDHEAP/mhinterl/parp/models/Qwen3.5-27B-AWQ
-DTYPE=bf16
+DTYPE=auto
+BACKEND=vllm
 
 # Inference
 BATCH_SIZE=4
@@ -56,7 +57,7 @@ echo "=== RUN CONFIG ==="
 echo "INPUT=${INPUT}"
 echo "OUTPUT_BASE=${OUTPUT_BASE}"
 echo "TEXT_COL=${TEXT_COL} | N_ROWS=${N_ROWS}"
-echo "MODEL=${MODEL_PATH} | DTYPE=${DTYPE}"
+echo "MODEL=${MODEL_PATH} | DTYPE=${DTYPE} | BACKEND=${BACKEND}"
 echo "BATCH=${BATCH_SIZE} | MAX_NEW_TOKENS=${MAX_NEW_TOKENS} | MAX_INPUT_TOKENS=${MAX_INPUT_TOKENS} | TEMP=${TEMPERATURE}"
 
 python scripts/pipeline.py \
@@ -66,6 +67,7 @@ python scripts/pipeline.py \
   --n_rows            "1000" \
   --model_path        "$MODEL_PATH" \
   --dtype             "$DTYPE" \
+  --backend           "$BACKEND" \
   --trust_remote_code \
   --batch_size        "$BATCH_SIZE" \
   --max_new_tokens    "$MAX_NEW_TOKENS" \
