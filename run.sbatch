@@ -24,7 +24,7 @@ OUTPUT_BASE=${WORKDIR}/data/output
 TEXT_COL=text
 
 # Subset: number of rows to run (0 = full dataset)
-N_ROWS=0
+N_ROWS=1000
 
 # Model
 MODEL_PATH=/reference/LLM/swiss-ai/Apertus-8B-Instruct-2509
@@ -32,9 +32,9 @@ DTYPE=bf16
 BACKEND=transformers
 
 # Inference
-BATCH_SIZE=4
-MAX_NEW_TOKENS=400
-MAX_INPUT_TOKENS=7168
+BATCH_SIZE=2
+MAX_NEW_TOKENS=512
+MAX_INPUT_TOKENS=16384
 TEMPERATURE=0.0
 
 # =============================================================================

@@ -6,9 +6,18 @@ from __future__ import annotations
 import pandas as pd
 
 # ---------------------------------------------------------------------------
-# Output columns — order matters: CRITIC is used as the resumability key
+# Output columns — order matters: SWISS_CONTEXT is used as the resumability key
 # ---------------------------------------------------------------------------
-OUTPUT_COLS = ["CRITIC", "TARGETED_ENTITY", "SOURCE_ENTITY", "JUSTIFICATION"]
+OUTPUT_COLS = [
+    "SWISS_CONTEXT",          # bool   — YES / NO
+    "CRITICISM",              # string — YES / NO / N/A
+    "TARGETED_ENTITY_TYPE",   # string — category or N/A
+    "TARGETED_ENTITY_NAME",   # string — name as in text or N/A
+    "SOURCE_TYPE",            # string — category or N/A
+    "SOURCE_NAME",            # string — name as in text or N/A
+    "CRITICISM_TOPIC",        # string — 1-2 sentences or N/A
+    "POPULIST_RHETORIC",      # string — YES / NO / N/A
+]
 
 # ---------------------------------------------------------------------------
 # Row selection mask — edit to filter which rows are sent to the LLM

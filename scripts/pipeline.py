@@ -15,8 +15,15 @@ from src.prompts import SYSTEM_PROMPT, build_user_prompt
 from src.config import build_mask, OUTPUT_COLS
 
 
+def _yn(value: str | None) -> bool | None:
+    """Convert 'YES'/'NO' string to bool; return None for anything else."""
+    if value is None:
+        return None
+    return value.upper() == "YES"
+
+
 def parse_output(raw: str) -> dict:
-    """Parse the 4-line LLM response into a dict of output columns."""
+    """Parse the 8-line LLM response into a dict of output columns."""
     empty = {col: pd.NA for col in OUTPUT_COLS}
     if not raw:
         return empty
@@ -24,22 +31,61 @@ def parse_output(raw: str) -> dict:
     s = str(raw)
 
     def _extract(pattern: str) -> str | None:
-        m = re.search(pattern, s, flags=re.IGNORECASE)
-        return m.group(1).strip() if m else None
+        m = re.search(pattern, s, flags=re.IGNORECASE | re.MULTILINE)
+        val = m.group(1).strip() if m else None
+        return None if val and val.upper() == "N/A" else val
 
-    critic_raw  = _extract(r"CRITIC:\s*(YES|NO)\b")
-    targeted    = _extract(r"TARGETED_ENTITY:\s*(.+)")
-    source      = _extract(r"SOURCE_ENTITY:\s*(.+)")
-    justif      = _extract(r"JUSTIFICATION:\s*(.+)")
+    swiss_raw   = _extract(r"SWISS_CONTEXT:\s*(YES|NO)\b")
+    crit_raw    = _extract(r"CRITICISM:\s*(YES|NO)\b")
+    tgt_type    = _extract(r"TARGETED_ENTITY_TYPE:\s*(.+)")
+    tgt_name    = _extract(r"TARGETED_ENTITY_NAME:\s*(.+)")
+    src_type    = _extract(r"SOURCE_TYPE:\s*(.+)")
+    src_name    = _extract(r"SOURCE_NAME:\s*(.+)")
+    topic       = _extract(r"CRITICISM_TOPIC:\s*(.+)")
+    pop_raw     = _extract(r"POPULIST_RHETORIC:\s*(YES|NO)\b")
 
-    if critic_raw is None:
+    if swiss_raw is None:
         return empty
 
+    swiss = _yn(swiss_raw)
+
+    # If no Swiss context, cascade everything to N/A
+    if not swiss:
+        return {
+            "SWISS_CONTEXT":        swiss,
+            "CRITICISM":            "N/A",
+            "TARGETED_ENTITY_TYPE": pd.NA,
+            "TARGETED_ENTITY_NAME": pd.NA,
+            "SOURCE_TYPE":          pd.NA,
+            "SOURCE_NAME":          pd.NA,
+            "CRITICISM_TOPIC":      pd.NA,
+            "POPULIST_RHETORIC":    "N/A",
+        }
+
+    criticism = crit_raw.upper() if crit_raw else "N/A"
+
+    # If Swiss but no criticism, cascade entity/source/topic/populist to N/A
+    if criticism != "YES":
+        return {
+            "SWISS_CONTEXT":        swiss,
+            "CRITICISM":            criticism,
+            "TARGETED_ENTITY_TYPE": pd.NA,
+            "TARGETED_ENTITY_NAME": pd.NA,
+            "SOURCE_TYPE":          pd.NA,
+            "SOURCE_NAME":          pd.NA,
+            "CRITICISM_TOPIC":      pd.NA,
+            "POPULIST_RHETORIC":    "N/A",
+        }
+
     return {
-        "CRITIC":           critic_raw.upper() == "YES",
-        "TARGETED_ENTITY":  targeted if targeted and targeted.upper() != "NONE" else pd.NA,
-        "SOURCE_ENTITY":    source   if source   and source.upper()   != "NONE" else pd.NA,
-        "JUSTIFICATION":    justif,
+        "SWISS_CONTEXT":        swiss,
+        "CRITICISM":            "YES",
+        "TARGETED_ENTITY_TYPE": tgt_type,
+        "TARGETED_ENTITY_NAME": tgt_name,
+        "SOURCE_TYPE":          src_type,
+        "SOURCE_NAME":          src_name,
+        "CRITICISM_TOPIC":      topic,
+        "POPULIST_RHETORIC":    pop_raw.upper() if pop_raw else pd.NA,
     }
 
 
@@ -77,8 +123,8 @@ def main() -> int:
         df = df.head(args.n_rows).copy()
         print(f"[n_rows] Subsetting to first {args.n_rows} rows")
 
-    # --- Prepare output columns (dtypes must match what parse_output returns) ---
-    col_dtypes = {"CRITIC": "boolean"}  # bool column; all others are string
+    # --- Prepare output columns ---
+    col_dtypes = {"SWISS_CONTEXT": "boolean"}  # only this one is a true bool
     for col in OUTPUT_COLS:
         if col not in df.columns:
             df[col] = pd.Series(pd.NA, index=df.index, dtype=col_dtypes.get(col, "string"))
@@ -113,7 +159,7 @@ def main() -> int:
         build_prompt_fn=lambda row, col: build_user_prompt(row, col),
         parse_fn=parse_output,
         output_cols=OUTPUT_COLS,
-        skip_if_already_filled=OUTPUT_COLS[0],  # resume on CRITIC
+        skip_if_already_filled=OUTPUT_COLS[0],  # resume on SWISS_CONTEXT
     )
 
     # --- Save ---
