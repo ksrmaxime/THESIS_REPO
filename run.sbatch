@@ -27,9 +27,9 @@ TEXT_COL=text
 N_ROWS=0
 
 # Model
-MODEL_PATH=/work/FAC/FDCA/IDHEAP/mhinterl/parp/models/Qwen3.5-27B-AWQ
-DTYPE=auto
-BACKEND=vllm
+MODEL_PATH=/reference/LLM/swiss-ai/Apertus-8B-Instruct-2509
+DTYPE=bf16
+BACKEND=transformers
 
 # Inference
 BATCH_SIZE=4
