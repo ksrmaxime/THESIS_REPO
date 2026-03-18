@@ -98,16 +98,24 @@ class TransformersClient:
             )
 
         if self._backend == "vllm":
-            return self._generate_vllm(prompts, temperature, max_new_tokens)
+            return self._generate_vllm(prompts, temperature, max_new_tokens, max_input_tokens)
         else:
             return self._generate_transformers(prompts, temperature, max_new_tokens, max_input_tokens)
 
-    def _generate_vllm(self, prompts, temperature, max_new_tokens):
+    def _generate_vllm(self, prompts, temperature, max_new_tokens, max_input_tokens):
+        truncated = []
+        for p in prompts:
+            ids = self.tok.encode(p)
+            if len(ids) > max_input_tokens:
+                ids = ids[:max_input_tokens]
+                p = self.tok.decode(ids, skip_special_tokens=False)
+            truncated.append(p)
+
         sampling = self._SamplingParams(
             temperature=float(temperature),
             max_tokens=int(max_new_tokens),
         )
-        outputs = self.llm.generate(prompts, sampling)
+        outputs = self.llm.generate(truncated, sampling)
         return [out.outputs[0].text.strip() for out in outputs]
 
     def _generate_transformers(self, prompts, temperature, max_new_tokens, max_input_tokens):
