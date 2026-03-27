@@ -10,8 +10,8 @@ import pandas as pd
 
 from src.client import TransformersClient, LLMConfig
 from src.runner import run_llm_dataframe, RunConfig
-from src.target_prompt import SYSTEM_PROMPT, build_user_prompt
-from src.target_config import build_mask, OUTPUT_COLS
+from src.run2_prompt import SYSTEM_PROMPT, build_user_prompt
+from src.run2_config import build_mask, OUTPUT_COLS
 
 
 def parse_output(raw: str) -> dict:

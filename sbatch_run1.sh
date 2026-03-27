@@ -61,7 +61,7 @@ echo "TEXT_COL=${TEXT_COL} | N_ROWS=${N_ROWS}"
 echo "MODEL=${MODEL_PATH} | DTYPE=${DTYPE} | BACKEND=${BACKEND}"
 echo "BATCH=${BATCH_SIZE} | MAX_NEW_TOKENS=${MAX_NEW_TOKENS} | MAX_INPUT_TOKENS=${MAX_INPUT_TOKENS} | TEMP=${TEMPERATURE}"
 
-python scripts/pipeline.py \
+python scripts/run1_pipeline.py \
   --input             "$INPUT" \
   --output_base       "$OUTPUT_BASE" \
   --text_col          "$TEXT_COL" \
@@ -120,7 +120,7 @@ fi
 mkdir -p "$RUN_DIR"
 
 cp "$PRED_CSV"       "$RUN_DIR/results.csv"        || true
-cp "src/prompts.py"  "$RUN_DIR/prompts_used.py"    || true
+cp "src/run1_prompts.py"  "$RUN_DIR/prompts_used.py"    || true
 cp "$0"              "$RUN_DIR/sbatch_used.sbatch"  || true
 
 # move eval reports

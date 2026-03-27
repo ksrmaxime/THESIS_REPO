@@ -11,8 +11,8 @@ import pandas as pd
 
 from src.client import TransformersClient, LLMConfig
 from src.runner import run_llm_dataframe, RunConfig
-from src.prompts import SYSTEM_PROMPT, build_user_prompt
-from src.config import build_mask, OUTPUT_COLS
+from src.run1_prompts import SYSTEM_PROMPT, build_user_prompt
+from src.run1_config import build_mask, OUTPUT_COLS
 
 
 def parse_output(raw: str) -> dict:
