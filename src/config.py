@@ -11,11 +11,11 @@ import pandas as pd
 OUTPUT_COLS = [
     "SWISS_CONTEXT",          # string — YES / NO
     "CRITICISM",              # string — YES / NO / N/A
+    "CRITICISM_TOPIC",        # string — 1-2 sentences or N/A
     "TARGETED_ENTITY_TYPE",   # string — category or N/A
     "TARGETED_ENTITY_NAME",   # string — name as in text or N/A
     "SOURCE_TYPE",            # string — category or N/A
     "SOURCE_NAME",            # string — name as in text or N/A
-    "CRITICISM_TOPIC",        # string — 1-2 sentences or N/A
     "POPULIST_RHETORIC",      # string — YES / NO / N/A
 ]
 

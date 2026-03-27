@@ -30,11 +30,11 @@ def parse_output(raw: str) -> dict:
 
     swiss_raw   = _extract(r"SWISS_CONTEXT:\s*(YES|NO)\b")
     crit_raw    = _extract(r"CRITICISM:\s*(YES|NO)\b")
+    topic       = _extract(r"CRITICISM_TOPIC:\s*(.+)")
     tgt_type    = _extract(r"TARGETED_ENTITY_TYPE:\s*(.+)")
     tgt_name    = _extract(r"TARGETED_ENTITY_NAME:\s*(.+)")
     src_type    = _extract(r"SOURCE_TYPE:\s*(.+)")
     src_name    = _extract(r"SOURCE_NAME:\s*(.+)")
-    topic       = _extract(r"CRITICISM_TOPIC:\s*(.+)")
     pop_raw     = _extract(r"POPULIST_RHETORIC:\s*(YES|NO)\b")
 
     if swiss_raw is None:
@@ -47,11 +47,11 @@ def parse_output(raw: str) -> dict:
         return {
             "SWISS_CONTEXT":        swiss,
             "CRITICISM":            "N/A",
+            "CRITICISM_TOPIC":      pd.NA,
             "TARGETED_ENTITY_TYPE": pd.NA,
             "TARGETED_ENTITY_NAME": pd.NA,
             "SOURCE_TYPE":          pd.NA,
             "SOURCE_NAME":          pd.NA,
-            "CRITICISM_TOPIC":      pd.NA,
             "POPULIST_RHETORIC":    "N/A",
         }
 
@@ -62,22 +62,22 @@ def parse_output(raw: str) -> dict:
         return {
             "SWISS_CONTEXT":        swiss,
             "CRITICISM":            criticism,
+            "CRITICISM_TOPIC":      pd.NA,
             "TARGETED_ENTITY_TYPE": pd.NA,
             "TARGETED_ENTITY_NAME": pd.NA,
             "SOURCE_TYPE":          pd.NA,
             "SOURCE_NAME":          pd.NA,
-            "CRITICISM_TOPIC":      pd.NA,
             "POPULIST_RHETORIC":    "N/A",
         }
 
     return {
         "SWISS_CONTEXT":        swiss,
         "CRITICISM":            "YES",
+        "CRITICISM_TOPIC":      topic,
         "TARGETED_ENTITY_TYPE": tgt_type,
         "TARGETED_ENTITY_NAME": tgt_name,
         "SOURCE_TYPE":          src_type,
         "SOURCE_NAME":          src_name,
-        "CRITICISM_TOPIC":      topic,
         "POPULIST_RHETORIC":    pop_raw.upper() if pop_raw else pd.NA,
     }
 
