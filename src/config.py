@@ -9,7 +9,7 @@ import pandas as pd
 # Output columns — order matters: SWISS_CONTEXT is used as the resumability key
 # ---------------------------------------------------------------------------
 OUTPUT_COLS = [
-    "SWISS_CONTEXT",          # bool   — YES / NO
+    "SWISS_CONTEXT",          # string — YES / NO
     "CRITICISM",              # string — YES / NO / N/A
     "TARGETED_ENTITY_TYPE",   # string — category or N/A
     "TARGETED_ENTITY_NAME",   # string — name as in text or N/A

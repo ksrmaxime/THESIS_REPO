@@ -22,6 +22,7 @@ WORKDIR=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO
 INPUT=${WORKDIR}/data/input/input.parquet
 OUTPUT_BASE=${WORKDIR}/data/output
 TEXT_COL=text
+GOLD_CSV=${WORKDIR}/data/input/thesis_full_article_gold.csv
 
 # Subset: number of rows to run (0 = full dataset)
 N_ROWS=1000
@@ -75,19 +76,65 @@ python scripts/pipeline.py \
   --temperature       "$TEMPERATURE"
 
 # =============================================================================
-# ARCHIVE — result + prompts + this sbatch stored together under one run folder
+# SCORING — compare predictions against gold, per column
 # =============================================================================
 
 PRED_CSV="${OUTPUT_BASE}_job${SLURM_JOB_ID}.csv"
-RUN_DIR="${WORKDIR}/data/output/run_job${SLURM_JOB_ID}"
+
+# temporary run dir (renamed after scoring)
+RUN_DIR_TMP="${WORKDIR}/data/output/run_job${SLURM_JOB_ID}"
+mkdir -p "$RUN_DIR_TMP"
+
+# Column kinds:
+#   label  — fixed vocabulary (YES/NO, categories)  → exact match + macro F1
+#   text   — free-form strings                       → exact match after normalisation
+COL_KINDS="TARGETED_ENTITY_NAME=text,SOURCE_NAME=text,CRITICISM_TOPIC=text"
+
+SCORE_LOG=$(python scripts/score.py \
+  --pred       "$PRED_CSV" \
+  --gold       "$GOLD_CSV" \
+  --id_col article_id \
+  --cols       "SWISS_CONTEXT,CRITICISM,TARGETED_ENTITY_TYPE,TARGETED_ENTITY_NAME,SOURCE_TYPE,SOURCE_NAME,CRITICISM_TOPIC,POPULIST_RHETORIC" \
+  --col_kinds  "$COL_KINDS" \
+  --report_dir "$RUN_DIR_TMP/eval" \
+  --print_errors_head 10 \
+  --max_rows 300)
+
+echo "$SCORE_LOG"
+
+# Extract global similarity score for folder naming
+SCORE=$(echo "$SCORE_LOG" | awk '/^Similarity:/ {gsub(/%/,"",$2); print $2; exit}')
+SCORE=${SCORE:-NA}
+
+# =============================================================================
+# ARCHIVE — result + prompts + this sbatch stored together under one run folder
+# =============================================================================
+
+if [ "$SCORE" = "NA" ]; then
+  RUN_DIR="${WORKDIR}/data/output/run_no_score_job${SLURM_JOB_ID}"
+else
+  SCORE_TAG=$(printf "%.2f" "$SCORE" | tr '.' 'p')
+  RUN_DIR="${WORKDIR}/data/output/run_${SCORE_TAG}_job${SLURM_JOB_ID}"
+fi
+
 mkdir -p "$RUN_DIR"
 
-cp "$PRED_CSV"            "$RUN_DIR/results.csv"       || true
-cp "src/prompts.py"       "$RUN_DIR/prompts_used.py"
-cp "$0"                   "$RUN_DIR/sbatch_used.sbatch"
+cp "$PRED_CSV"       "$RUN_DIR/results.csv"        || true
+cp "src/prompts.py"  "$RUN_DIR/prompts_used.py"    || true
+cp "$0"              "$RUN_DIR/sbatch_used.sbatch"  || true
+
+# move eval reports
+if [ -d "$RUN_DIR_TMP/eval" ]; then
+  mv "$RUN_DIR_TMP/eval" "$RUN_DIR/eval"
+fi
+
+# cleanup temp dir
+rmdir "$RUN_DIR_TMP" 2>/dev/null || true
 
 echo "=== ARCHIVED ==="
 echo "Run folder : $RUN_DIR"
 echo "  results.csv"
 echo "  prompts_used.py"
 echo "  sbatch_used.sbatch"
+echo "  eval/"
+echo "Score: ${SCORE}%"

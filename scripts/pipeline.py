@@ -15,13 +15,6 @@ from src.prompts import SYSTEM_PROMPT, build_user_prompt
 from src.config import build_mask, OUTPUT_COLS
 
 
-def _yn(value: str | None) -> bool | None:
-    """Convert 'YES'/'NO' string to bool; return None for anything else."""
-    if value is None:
-        return None
-    return value.upper() == "YES"
-
-
 def parse_output(raw: str) -> dict:
     """Parse the 8-line LLM response into a dict of output columns."""
     empty = {col: pd.NA for col in OUTPUT_COLS}
@@ -47,10 +40,10 @@ def parse_output(raw: str) -> dict:
     if swiss_raw is None:
         return empty
 
-    swiss = _yn(swiss_raw)
+    swiss = swiss_raw.upper()  # "YES" or "NO" — kept as string to match gold data
 
     # If no Swiss context, cascade everything to N/A
-    if not swiss:
+    if swiss != "YES":
         return {
             "SWISS_CONTEXT":        swiss,
             "CRITICISM":            "N/A",
@@ -124,10 +117,9 @@ def main() -> int:
         print(f"[n_rows] Subsetting to first {args.n_rows} rows")
 
     # --- Prepare output columns ---
-    col_dtypes = {"SWISS_CONTEXT": "boolean"}  # only this one is a true bool
     for col in OUTPUT_COLS:
         if col not in df.columns:
-            df[col] = pd.Series(pd.NA, index=df.index, dtype=col_dtypes.get(col, "string"))
+            df[col] = pd.Series(pd.NA, index=df.index, dtype="string")
 
     # --- Init client ---
     client = TransformersClient(
