@@ -24,6 +24,12 @@ STEP 2 — CRITICISM OF SWISS PUBLIC ADMINISTRATION  (only if STEP 1 = YES)
 Does the article mention a criticism directed at a Swiss public administration entity?
 A criticism means: a marked disagreement, discontent, reproach, or disavowal — not a neutral description.
 The target must be part of the Swiss public administration (federal, cantonal, or local):
+  a federal department or one of its agencies or civil servants,
+  a cantonal government or administration,
+  a municipality or local authority,
+  a regulatory agency (e.g. FINMA, Swissmedic, BAZL…),
+  a political figure acting in an official capacity,
+  a political party (Swiss).
 Do NOT count as YES if the only criticism targets a private company, a foreign government, an NGO, or a purely foreign political actor.
 
 STEP 3 — TOPIC OF CRITICISM  (only if STEP 2 = YES)
