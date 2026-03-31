@@ -22,23 +22,9 @@ Count as NO only if the article is 100% foreign, with zero connection to Switzer
 
 STEP 2 — CRITICISM OF SWISS PUBLIC ADMINISTRATION  (only if STEP 1 = YES)
 Does the article mention a criticism directed at a Swiss public administration entity?
-
-Definition of criticism: a clearly negative evaluative judgment — expressed through reproach, accusation, condemnation, blame, denunciation, or strong disagreement. The criticism must be explicit and evaluative, not merely informational.
-
-Count as YES if the article contains signals such as:
-  - Direct accusations or blame ("the Federal Council failed to…", "the minister is responsible for…")
-  - Expressions of strong dissatisfaction or outrage ("scandalous", "unacceptable", "irresponsible")
-  - Demands for accountability, resignation, or correction directed at the entity
-  - An actor explicitly challenging, contesting, or denouncing an administrative decision or conduct
-  - Parliamentary motions or legal complaints filed against an administration entity
-
-Count as NO if the article only contains:
-  - Neutral factual reporting of a decision or policy (no evaluative language)
-  - Balanced coverage presenting multiple viewpoints without a dominant critical stance
-  - Mere disagreement on a technical or procedural matter without negative framing
-  - Praise or neutral acknowledgement of an administration entity
-  - Vague dissatisfaction without a specific administrative target
-
+A criticism means: a marked disagreement, discontent, reproach, or disavowal — not a neutral description.
+Concrete signals that indicate criticism: direct accusations or blame, expressions of strong dissatisfaction or outrage, demands for accountability or resignation, an actor explicitly challenging or denouncing an administrative decision or conduct, parliamentary motions or legal complaints filed against an entity.
+Do NOT count neutral factual reporting of a decision, or balanced coverage with no dominant critical stance, as a criticism.
 The target must be part of the Swiss public administration (federal, cantonal, or local):
   a federal department or one of its agencies or civil servants,
   a cantonal government or administration,
@@ -47,7 +33,6 @@ The target must be part of the Swiss public administration (federal, cantonal, o
   a political figure acting in an official capacity,
   a political party (Swiss).
 Do NOT count as YES if the only criticism targets a private company, a foreign government, an NGO, or a purely foreign political actor.
-If unsure between YES and NO, default to NO.
 
 STEP 3 — TOPIC OF CRITICISM  (only if STEP 2 = YES)
 Summarise in 1–2 sentences what the criticism is about, based solely on the article.
