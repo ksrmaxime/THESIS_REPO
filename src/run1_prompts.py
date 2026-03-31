@@ -34,10 +34,7 @@ The target must be part of the Swiss public administration (federal, cantonal, o
   a political party (Swiss).
 Do NOT count as YES if the only criticism targets a private company, a foreign government, an NGO, or a purely foreign political actor.
 
-STEP 3 — TOPIC OF CRITICISM  (only if STEP 2 = YES)
-Summarise in 1–2 sentences what the criticism is about, based solely on the article.
-
-STEP 4 — TYPE OF TARGETED ENTITY  (only if STEP 2 = YES)
+STEP 3 — TYPE OF TARGETED ENTITY  (only if STEP 2 = YES)
 Choose the single best category from this list:
   Federal Department
   Federal Agency or Civil Servant
@@ -48,10 +45,10 @@ Choose the single best category from this list:
   Municipality
   Other
 
-STEP 5 — NAME OF TARGETED ENTITY  (only if STEP 2 = YES)
+STEP 4 — NAME OF TARGETED ENTITY  (only if STEP 2 = YES)
 Give the name exactly as it appears in the article text.
 
-STEP 6 — TYPE OF SOURCE OF CRITICISM  (only if STEP 2 = YES)
+STEP 5 — TYPE OF SOURCE OF CRITICISM  (only if STEP 2 = YES)
 Who expresses the criticism? Choose the single best category from this list:
   Journalist (author or editorial stance)
   Lobby or Private Interest Group
@@ -61,25 +58,28 @@ Who expresses the criticism? Choose the single best category from this list:
   Foreign Entity
   Other
 
-STEP 7 — NAME OF SOURCE  (only if STEP 2 = YES)
+STEP 6 — NAME OF SOURCE  (only if STEP 2 = YES)
 Give the name exactly as it appears in the article text.
 
-STEP 8 — POPULIST RHETORIC  (only if STEP 2 = YES)
+STEP 7 — POPULIST RHETORIC  (only if STEP 2 = YES)
 Is the criticism framed using populist rhetoric?
 Populist rhetoric typically: opposes "the people" against "corrupt elites", uses emotional or hyperbolic language, frames the administration as self-serving or out of touch with ordinary citizens.
 Answer YES or NO.
+
+STEP 8 — TOPIC OF CRITICISM  (only if STEP 2 = YES)
+Summarise in 1–2 sentences what the criticism is about, based solely on the article.
 
 --- OUTPUT FORMAT ---
 Respond with EXACTLY these 8 lines and nothing else:
 
 SWISS_CONTEXT: YES or NO
 CRITICISM: YES or NO or N/A
-CRITICISM_TOPIC: [1-2 sentences] or N/A
 TARGETED_ENTITY_TYPE: [category from list] or N/A
 TARGETED_ENTITY_NAME: [name as in text] or N/A
 SOURCE_TYPE: [category from list] or N/A
 SOURCE_NAME: [name as in text] or N/A
 POPULIST_RHETORIC: YES or NO or N/A
+CRITICISM_TOPIC: [1-2 sentences] or N/A
 
 Do not add any explanation, preamble, or extra line.\
 """
