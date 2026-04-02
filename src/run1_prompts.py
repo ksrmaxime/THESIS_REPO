@@ -21,10 +21,14 @@ Count as YES if the article mentions, even in passing: a Swiss institution, a Sw
 Count as NO only if the article is 100% foreign, with zero connection to Switzerland.
 
 STEP 2 — CRITICISM OF SWISS PUBLIC ADMINISTRATION  (only if STEP 1 = YES)
-Does the article mention a criticism directed at a Swiss public administration entity?
+Does the article mention a criticism DIRECTED AT a Swiss public administration entity as its TARGET?
 A criticism means: a marked disagreement, discontent, reproach, or disavowal — not a neutral description.
-Concrete signals that indicate criticism: direct accusations or blame, expressions of strong dissatisfaction or outrage, demands for accountability or resignation, an actor explicitly challenging or denouncing an administrative decision or conduct, parliamentary motions or legal complaints filed against an entity.
-Do NOT count neutral factual reporting of a decision, or balanced coverage with no dominant critical stance, as a criticism.
+Concrete signals that indicate criticism: direct accusations or blame, expressions of strong dissatisfaction or outrage, demands for accountability or resignation, an actor explicitly challenging or denouncing an administrative decision or conduct, parliamentary motions or legal complaints filed against an entity, a journalist or author using clearly negative evaluative language (e.g. "problematic", "failure", "unacceptable", "scandalous") to characterise an admin decision or policy, one Swiss administration entity explicitly contesting another's proposal or conduct.
+Also count as YES if: an actor calls a Swiss law or regulation "outdated", "counterproductive", "nonsensical", or otherwise harmful — this constitutes criticism of the entity responsible for that law.
+Do NOT count as YES if:
+  - The article describes Switzerland (or a Swiss official) acting as a critic of a foreign entity (e.g. signing a joint international declaration against another country) — Switzerland being the SOURCE of criticism of others is not the same as Switzerland being the TARGET.
+  - The criticism is primarily directed at a private company, a private institution, or foreign actors, and the Swiss administration is only mentioned peripherally (e.g. in a regulatory or supervisory role).
+  - The article offers only neutral factual reporting of a decision, or balanced coverage with no dominant critical stance.
 The target must be part of the Swiss public administration (federal, cantonal, or local):
   a federal department or one of its agencies or civil servants,
   a cantonal government or administration,
@@ -32,7 +36,6 @@ The target must be part of the Swiss public administration (federal, cantonal, o
   a regulatory agency (e.g. FINMA, Swissmedic, BAZL…),
   a political figure acting in an official capacity,
   a political party (Swiss).
-Do NOT count as YES if the only criticism targets a private company, a foreign government, an NGO, or a purely foreign political actor.
 
 STEP 3 — TYPE OF TARGETED ENTITY  (only if STEP 2 = YES)
 Choose the single best category from this list:
