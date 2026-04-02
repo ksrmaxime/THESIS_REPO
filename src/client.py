@@ -65,7 +65,7 @@ class TransformersClient:
         self.model = AutoModelForCausalLM.from_pretrained(
             cfg.model_path,
             trust_remote_code=cfg.trust_remote_code,
-            torch_dtype=dtype,
+            dtype=dtype,
             device_map="auto",
         ).eval()
 
