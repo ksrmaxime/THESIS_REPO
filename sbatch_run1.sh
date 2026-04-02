@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=thesis_run
-#SBATCH --partition=gpu
+#SBATCH --partition=gpu-l40
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=48G
@@ -33,7 +33,7 @@ DTYPE=bf16
 BACKEND=transformers
 
 # Inference
-BATCH_SIZE=1
+BATCH_SIZE=4
 MAX_NEW_TOKENS=512
 MAX_INPUT_TOKENS=16384
 TEMPERATURE=0.0
