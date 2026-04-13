@@ -274,6 +274,7 @@ def compare_frames(
     gold: pd.DataFrame,
     id_col: str,
     column_configs: List[ColumnConfig],
+    extra_cols: Optional[List[str]] = None,
 ) -> Tuple[EvalResult, pd.DataFrame, Dict[str, pd.DataFrame], Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
     """
     Returns:
@@ -282,6 +283,8 @@ def compare_frames(
       - confusion matrices per column
       - classification reports per column
       - label distributions per column
+
+    extra_cols: columns from pred to carry through into merged (and error files), e.g. ["text"].
     """
     if id_col not in pred.columns:
         raise ValueError(f"id_col '{id_col}' not found in pred")
@@ -289,6 +292,7 @@ def compare_frames(
         raise ValueError(f"id_col '{id_col}' not found in gold")
 
     cols = [cfg.name for cfg in column_configs]
+    extra_cols = [c for c in (extra_cols or []) if c in pred.columns]
 
     missing_pred = [c for c in cols if c not in pred.columns]
     missing_gold = [c for c in cols if c not in gold.columns]
@@ -297,7 +301,7 @@ def compare_frames(
     if missing_gold:
         raise ValueError(f"Missing columns in gold: {missing_gold}")
 
-    p = pred[[id_col] + cols].copy()
+    p = pred[[id_col] + cols + extra_cols].copy()
     g = gold[[id_col] + cols].copy()
 
     merged = p.merge(g, on=id_col, how="inner", suffixes=("_pred", "_gold"))
@@ -452,6 +456,7 @@ def save_eval_outputs(
     label_distributions: Dict[str, pd.DataFrame],
     column_configs: List[ColumnConfig],
     id_col: str,
+    extra_cols: Optional[List[str]] = None,
 ) -> None:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -492,7 +497,8 @@ def save_eval_outputs(
         match_col = f"{c}__match"
         compared_col = f"{c}__compared"
 
-        error_cols = [id_col, pred_col, gold_col, match_col, compared_col]
+        extra_in_merged = [c for c in (extra_cols or []) if c in merged.columns]
+        error_cols = [id_col] + extra_in_merged + [pred_col, gold_col, match_col, compared_col]
         error_df = merged.loc[
             merged[compared_col].fillna(False) & (merged[match_col] == False),
             error_cols,

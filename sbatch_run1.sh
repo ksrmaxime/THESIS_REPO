@@ -96,6 +96,7 @@ SCORE_LOG=$(python scripts/score.py \
   --id_col article_id \
   --cols       "SWISS_CONTEXT,CRITICISM,TARGETED_ENTITY_TYPE,TARGETED_ENTITY_NAME,SOURCE_TYPE,SOURCE_NAME,CRITICISM_TOPIC,POPULIST_RHETORIC" \
   --col_kinds  "$COL_KINDS" \
+  --extra_cols "$TEXT_COL" \
   --report_dir "$RUN_DIR_TMP/eval" \
   --print_errors_head 10 \
   --max_rows 300)

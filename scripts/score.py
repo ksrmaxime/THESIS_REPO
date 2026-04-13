@@ -72,6 +72,7 @@ def main() -> int:
     ap.add_argument("--col_kinds", default="", help="Per-column kinds, e.g. TARGETED_ENTITY_NAME=text,CRITICISM_TOPIC=text")
     ap.add_argument("--list_seps", default="", help="Per-column list separators, e.g. topics=|")
     ap.add_argument("--report_dir", default=None, help="Directory where evaluation reports will be saved")
+    ap.add_argument("--extra_cols", default="", help="Comma-separated columns from pred to include in error files, e.g. text")
     ap.add_argument("--print_errors_head", type=int, default=10, help="How many disagreement rows to preview per column")
     ap.add_argument(
         "--invert_gold_cols",
@@ -128,11 +129,14 @@ def main() -> int:
         drop_na_pairs=(not args.keep_na),
     )
 
+    extra_cols = [c.strip() for c in args.extra_cols.split(",") if c.strip()]
+
     result, merged, confusion_tables, classification_reports, label_distributions = compare_frames(
         pred=pred,
         gold=gold,
         id_col=id_col,
         column_configs=column_configs,
+        extra_cols=extra_cols,
     )
 
     print("=== EVAL ===")
@@ -182,6 +186,7 @@ def main() -> int:
             label_distributions=label_distributions,
             column_configs=column_configs,
             id_col=id_col,
+            extra_cols=extra_cols,
         )
         print(f"\nReports saved to: {args.report_dir}")
 
