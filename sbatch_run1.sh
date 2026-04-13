@@ -65,7 +65,7 @@ python scripts/run1_pipeline.py \
   --input             "$INPUT" \
   --output_base       "$OUTPUT_BASE" \
   --text_col          "$TEXT_COL" \
-  --n_rows            "1000" \
+  --n_rows            "300" \
   --model_path        "$MODEL_PATH" \
   --dtype             "$DTYPE" \
   --backend           "$BACKEND" \
