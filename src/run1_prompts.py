@@ -24,11 +24,16 @@ STEP 2 — CRITICISM OF SWISS PUBLIC ADMINISTRATION  (only if STEP 1 = YES)
 Does the article mention a criticism DIRECTED AT a Swiss public administration entity as its TARGET?
 A criticism means: a marked disagreement, discontent, reproach, or disavowal — not a neutral description.
 Concrete signals that indicate criticism: direct accusations or blame, expressions of strong dissatisfaction or outrage, demands for accountability or resignation, an actor explicitly challenging or denouncing an administrative decision or conduct, parliamentary motions or legal complaints filed against an entity, a journalist or author using clearly negative evaluative language (e.g. "problematic", "failure", "unacceptable", "scandalous") to characterise an admin decision or policy, one Swiss administration entity explicitly contesting another's proposal or conduct.
-Also count as YES if: an actor calls a Swiss law or regulation "outdated", "counterproductive", "nonsensical", or otherwise harmful — this constitutes criticism of the entity responsible for that law.
+Also count as YES if:
+  - An actor calls a Swiss law or regulation "outdated", "counterproductive", "nonsensical", or otherwise harmful — this constitutes criticism of the entity responsible for that law.
+  - A journalist or author frames an administrative decision to WITHHOLD, CLASSIFY, or REFUSE to disclose information as problematic, contrary to transparency principles, or contrary to the public interest — this constitutes criticism of the responsible entity.
+  - An article is overall balanced or analytical in tone, but contains EXPLICIT criticism of a Swiss administration entity (e.g. a quoted actor denouncing a decision, or the author using clearly negative language about a specific decision or policy) — balance in overall tone does NOT cancel out explicit criticism reported within the article.
 Do NOT count as YES if:
-  - The article describes Switzerland (or a Swiss official) acting as a critic of a foreign entity (e.g. signing a joint international declaration against another country) — Switzerland being the SOURCE of criticism of others is not the same as Switzerland being the TARGET.
-  - The criticism is primarily directed at a private company, a private institution, or foreign actors, and the Swiss administration is only mentioned peripherally (e.g. in a regulatory or supervisory role).
-  - The article offers only neutral factual reporting of a decision, or balanced coverage with no dominant critical stance.
+  - Switzerland or a Swiss official is the SOURCE of criticism directed at a FOREIGN entity (e.g. signing a joint international declaration against another country, condemning a foreign government's actions) — Switzerland being the SOURCE of criticism of others is NOT the same as Switzerland being the TARGET. Answer NO even if the article's overall tone is highly critical.
+  - An NGO, association, or individual ASKS or URGES Swiss authorities to open an investigation or take regulatory action — a request or call to act is NOT a criticism of that authority. Answer YES only if the article ALSO criticises the authority for past inaction or mishandling.
+  - The article reports on a social problem (e.g. discrimination, crime, violence) and Swiss authorities appear only as collaborators, supporters, or as entities with a positive relationship with the affected group — the absence of criticism of the administration is not the same as the presence of criticism.
+  - The criticism is primarily directed at a private company, a private institution, a foundation, or foreign actors, and the Swiss administration is only mentioned peripherally (e.g. in a regulatory or supervisory role, or as an entity being asked to act).
+  - The article offers only neutral factual reporting of a decision, with no actor or author expressing any of the signals listed above.
 The target must be part of the Swiss public administration (federal, cantonal, or local):
   a federal department or one of its agencies or civil servants,
   a cantonal government or administration,

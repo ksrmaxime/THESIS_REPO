@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=thesis_run
-#SBATCH --partition=gpu-l40
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=48G
@@ -22,7 +22,7 @@ WORKDIR=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO
 INPUT=${WORKDIR}/data/input/input.parquet
 OUTPUT_BASE=${WORKDIR}/data/output
 TEXT_COL=text
-GOLD_CSV=${WORKDIR}/data/input/thesis_full_article_gold.csv
+GOLD_CSV=${WORKDIR}/data/input/THESIS_RUN1_Max_Gold.csv
 
 # Subset: number of rows to run (0 = full dataset)
 N_ROWS=1000
@@ -33,7 +33,7 @@ DTYPE=bf16
 BACKEND=transformers
 
 # Inference
-BATCH_SIZE=4
+BATCH_SIZE=2
 MAX_NEW_TOKENS=512
 MAX_INPUT_TOKENS=16384
 TEMPERATURE=0.0
