@@ -25,7 +25,7 @@ TEXT_COL=text
 GOLD_CSV=${WORKDIR}/data/input/THESIS_RUN1_Max_Gold.csv
 
 # Subset: number of rows to run (0 = full dataset)
-N_ROWS=1000
+N_ROWS=300
 
 # Model
 MODEL_PATH=/reference/LLM/swiss-ai/Apertus-8B-Instruct-2509
