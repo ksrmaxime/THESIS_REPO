@@ -119,29 +119,35 @@ class TransformersClient:
         return [out.outputs[0].text.strip() for out in outputs]
 
     def _generate_transformers(self, prompts, temperature, max_new_tokens, max_input_tokens):
-        enc = self.tok(
-            prompts,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=max_input_tokens,
-        )
-        enc = {k: v.to(self.model.device) for k, v in enc.items()}
-
+        """Process prompts one-by-one to minimise peak GPU memory usage."""
         do_sample = float(temperature) > 0.0
+        results = []
 
-        with self.torch.inference_mode():
-            out = self.model.generate(
-                **enc,
-                max_new_tokens=int(max_new_tokens),
-                do_sample=do_sample,
-                temperature=float(temperature) if do_sample else None,
-                pad_token_id=self.tok.pad_token_id,
-                use_cache=True,
+        for prompt in prompts:
+            enc = self.tok(
+                prompt,
+                return_tensors="pt",
+                truncation=True,
+                max_length=max_input_tokens,
             )
+            enc = {k: v.to(self.model.device) for k, v in enc.items()}
 
-        input_len = enc["input_ids"].shape[1]
-        return [
-            self.tok.decode(out[i, input_len:], skip_special_tokens=True).strip()
-            for i in range(out.shape[0])
-        ]
+            with self.torch.inference_mode():
+                out = self.model.generate(
+                    **enc,
+                    max_new_tokens=int(max_new_tokens),
+                    do_sample=do_sample,
+                    temperature=float(temperature) if do_sample else None,
+                    pad_token_id=self.tok.pad_token_id,
+                    use_cache=True,
+                )
+
+            input_len = enc["input_ids"].shape[1]
+            text = self.tok.decode(out[0, input_len:], skip_special_tokens=True).strip()
+            results.append(text)
+
+            # Free activation memory before next prompt
+            del enc, out
+            self.torch.cuda.empty_cache()
+
+        return results

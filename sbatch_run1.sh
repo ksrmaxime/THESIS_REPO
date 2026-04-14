@@ -46,6 +46,9 @@ module load python/3.12.1
 cd "$WORKDIR"
 source .venv/bin/activate
 
+# Reduce GPU memory fragmentation (recommended when OOM on large models)
+export PYTORCH_ALLOC_CONF=expandable_segments:True
+
 mkdir -p logs data/processed
 
 echo "=== SLURM ==="
