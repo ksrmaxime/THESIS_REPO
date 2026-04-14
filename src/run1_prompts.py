@@ -24,26 +24,31 @@ STEP 2 — CRITICISM OF SWISS PUBLIC ADMINISTRATION  (only if STEP 1 = YES)
 Does the article present a negative assessment — expressed or implied — of something a specific Swiss public administration entity DID, DECIDED, or FAILED TO DO?
 
 Answer YES if ANY of the following is present in the article:
-  a) Any actor (politician, business, journalist, citizen, organisation) expresses dissatisfaction — in direct or indirect speech, strong or soft — with a Swiss admin entity's action, decision, inaction, or communication.
-  b) A journalist or author frames a Swiss admin entity's conduct or performance negatively, including understated language ("struggled to", "failed to capitalise on", "left something to be desired", "relative transparency", "seems to have missed") or critical framings in subheadings and leads.
+  a) Any actor (politician, business, journalist, citizen, organisation, auditor) expresses dissatisfaction — in direct or indirect speech, strong or soft — with a Swiss admin entity's action, decision, inaction, or communication. This includes audit findings (e.g. by the CDF/EFK) that criticise an agency's management, staffing, or performance.
+  b) A journalist or author frames a Swiss admin entity's conduct or performance negatively, including understated language ("struggled to", "failed to capitalise on", "left something to be desired", "relative transparency", "opacité", "seems to have missed") or critical framings in subheadings and leads.
   c) A journalist factually reports that a Swiss agency CANNOT FULFIL ITS MANDATE — cases suspended, core services outsourced because the agency can no longer manage them, staff shortage causing institutional failures. The reported inability is itself implicit criticism.
-  d) One Swiss admin entity explicitly challenges or contests another's proposal or conduct.
-  e) An actor calls a Swiss law, regulation, or publicly-administered system "outdated", "nonsensical", "counterproductive", or otherwise inadequate — this counts as criticism of the entity responsible for it.
+  d) One Swiss admin entity explicitly challenges or contests another's proposal, decision, or conduct — including a department opposing another department's proposed policy.
+  e) An actor calls a Swiss law, regulation, or publicly-administered system "outdated", "nonsensical", "counterproductive", or otherwise inadequate — this counts as criticism of the entity responsible for it, even if the article also advocates for legislative change.
+  f) The article reports that the ABSENCE of regulatory guidelines or oversight mechanisms by a Swiss authority contributed to or caused harm (e.g. no mandatory reporting requirement that could have prevented incidents).
+  g) A Swiss authority's delayed or absent response to a situation it was responsible for is reported as a failure or presented negatively.
 
 Answer NO if ANY of the following applies — and no YES signal is present:
-  a) Switzerland or a Swiss official appears only as the SOURCE of criticism of a FOREIGN entity (signing declarations, condemning another government) — the source of criticism is not the target.
-  b) Switzerland or a Swiss official appears only NEUTRALLY or POSITIVELY (hosting a meeting, court ruling in their favour, explicitly NOT adopting a controversial practice, attending a conference) — a neutral or peripheral mention is not criticism.
+  a) Switzerland or a Swiss official appears only as the SOURCE of criticism directed at a FOREIGN entity (co-signing declarations, condemning another government, criticising a foreign policy) — the source of criticism is not the target. Example: Switzerland co-signing a letter criticising Israel's conduct in Gaza → NO, Switzerland is not the target.
+  b) Switzerland or a Swiss official appears only NEUTRALLY or POSITIVELY (hosting a meeting, court ruling in their favour, explicitly NOT adopting a controversial practice, attending a conference, launching a new strategy) — a neutral or peripheral mention is not criticism.
   c) A parliamentary question asks the government ABOUT a foreign situation — this is a request for information, not condemnation of the Swiss government's own conduct.
-  d) An NGO or individual URGES Swiss authorities to investigate or act — a call to act is not criticism of that authority, unless the article also criticises them for past failure.
-  e) The primary subject of criticism is a PRIVATE entity (company, foundation, landlord, religious organisation); Swiss admin appears only peripherally as regulator or party asked to act.
-  f) The argument that a law "doesn't work" is made PRIMARILY in the context of advocating for new legislation, and the identified problem is the behaviour of PRIVATE ACTORS rather than the administration's own failure.
+  d) An NGO, individual, or organisation files a complaint or URGES Swiss authorities to investigate or act — a call to act is not criticism of that authority, unless the article also criticises them for past failure. This includes formal legal denunciations filed with Swiss agencies.
+  e) The primary subject of criticism is a PRIVATE entity (company, bank, foundation, landlord, religious organisation), including entities such as UBS, Credit Suisse, or other banks even if partly state-connected; Swiss admin appears only peripherally as regulator or party asked to act.
+  f) The argument that a law "doesn't work" is made PRIMARILY in the context of advocating for new legislation, AND the identified problem is the behaviour of PRIVATE ACTORS rather than the administration's own failure. (If the identified problem is the law or administration itself, this exception does NOT apply — classify YES under criterion e above.)
+  g) The article reports neutral, factual information about a government decision or announcement (budget figures, cost estimates, statistics) without any critical framing — even if the figures are large or unfavourable, if the authority itself is the source and no critical angle is present, this is not criticism.
+  h) The article is about crimes, fraud, or abuse committed by THIRD PARTIES who exploit or impersonate a Swiss authority's name or identity — this is not criticism of that authority.
 
-Note: YES signals count wherever they appear in the article — even if brief, in an otherwise balanced piece, or expressed through indirect speech.
+Note: YES signals count wherever they appear in the article — even if brief, in a single reader letter within a multi-letter article, in an otherwise balanced piece, or expressed through indirect speech. In articles covering multiple topics or composed of multiple sections/letters, it is sufficient that ONE section contains a YES signal.
 The target must be part of the Swiss public administration (federal, cantonal, or local):
   a federal department or one of its agencies or civil servants,
   a cantonal government or administration,
   a municipality or local authority,
   a regulatory agency (e.g. FINMA, Swissmedic, BAZL…),
+  a state-owned enterprise with a public mandate (e.g. Skyguide, SBB, Swiss Post),
   a political figure acting in an official capacity,
   a political party (Swiss).
 
