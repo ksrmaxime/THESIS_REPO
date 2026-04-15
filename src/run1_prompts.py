@@ -38,14 +38,14 @@ Answer NO if:
 
 STEP 3 — TYPE OF TARGETED ENTITY  (only if STEP 2 = YES)
 Choose one:
-  Federal Department        — one of the 7 Federal Departments (EDA, EDI, EJPD, VBS, EFD, UVEK, WBF), the Federal Chancellery, the Bundesrat as a collective body, or a broad federal policy system/law that falls under a department's mandate (e.g. hospital financing rules, procurement policy).
-  Federal Agency or Civil Servant — a named office WITHIN a department (BAG, SECO, fedpol, SEM, Armasuisse…) or a named civil servant who is not a Federal Councillor.
-  Regulatory Agency         — an independent supervisory body (FINMA, Swissmedic, WEKO, ElCom, BAKOM…).
-  Political Figure          — a named politician criticised for their personal conduct, statements, or leadership style (Federal Councillor criticised by name for personal behaviour or management culture; MP; cantonal councillor; mayor). Key signal: if critics address the PERSON by name as the primary subject ("Amherds Amtsführung", "ihr Führungsstil"), use Political Figure. If critics address the INSTITUTION ("das VBS hat versagt"), use Federal Department.
-  Political Party           — a Swiss political party.
-  Canton                    — a cantonal government, administration, or police.
-  Municipality              — a city or local authority (Gemeinde, Stadtrat).
-  Other                     — none of the above fits.
+  "Federal Department"        — one of the 7 Federal Departments (EDA, EDI, EJPD, VBS, EFD, UVEK, WBF), the Federal Chancellery, the Bundesrat as a collective body, or a broad federal policy system/law that falls under a department's mandate (e.g. hospital financing rules, procurement policy).
+  "Federal Agency or Civil Servant" — a named office WITHIN a department (BAG, SECO, fedpol, SEM, Armasuisse…) or a named civil servant who is not a Federal Councillor.
+  "Regulatory Agency"         — an independent supervisory body (FINMA, Swissmedic, WEKO, ElCom, BAKOM…).
+  "Political Figure"          — a named politician criticised for their personal conduct, statements, or leadership style (Federal Councillor criticised by name for personal behaviour or management culture; MP; cantonal councillor; mayor). Key signal: if critics address the PERSON by name as the primary subject ("Amherds Amtsführung", "ihr Führungsstil"), use Political Figure. If critics address the INSTITUTION ("das VBS hat versagt"), use Federal Department.
+  "Political Party"           — a Swiss political party.
+  "Canton"                    — a cantonal government, administration, or police.
+  "Municipality"              — a city or local authority (Gemeinde, Stadtrat).
+  "Other"                     — none of the above fits.
 
 STEP 4 — NAME OF TARGETED ENTITY  (only if STEP 2 = YES)
 Give the name exactly as it appears in the article.
@@ -53,19 +53,19 @@ Give the name exactly as it appears in the article.
 STEP 5 — TYPE OF SOURCE OF CRITICISM  (only if STEP 2 = YES)
 Who primarily expresses the criticism? Choose one:
 
-  Journalist (author or editorial stance) — the criticism comes from the journalist's own voice: their word choices, framing, narrative structure, subheadings, or editorial tone. Even if the article quotes others, the dominant critical voice belongs to the author. Use this when no single external actor is explicitly quoted as the critic.
+  "Journalist (author or editorial stance)" — the criticism comes from the journalist's own voice: their word choices, framing, narrative structure, subheadings, or editorial tone. Even if the article quotes others, the dominant critical voice belongs to the author. Use this when no single external actor is explicitly quoted as the critic.
 
-  Politician or Party — a named elected official (Federal Councillor, MP, cantonal councillor) or a named Swiss political party is explicitly quoted making a critical statement. Key signal: there is a direct or indirect quote attributing the condemnation to that person or party. Do NOT use this if the journalist is merely reporting a politician's existence in the story.
+  "Politician or Party" — a named elected official (Federal Councillor, MP, cantonal councillor) or a named Swiss political party is explicitly quoted making a critical statement. Key signal: there is a direct or indirect quote attributing the condemnation to that person or party. Do NOT use this if the journalist is merely reporting a politician's existence in the story.
 
-  Another Federal Department or Public Administration Entity — a Swiss public body (a department, agency, cantonal government, municipality) explicitly opposes or condemns another public body's decision or conduct. Key signal: the source entity is itself part of the Swiss administration.
+  "Another Federal Department or Public Administration Entity" — a Swiss public body (a department, agency, cantonal government, municipality) explicitly opposes or condemns another public body's decision or conduct. Key signal: the source entity is itself part of the Swiss administration.
 
-  Lobby or Private Interest Group — a named association, federation, union, or advocacy group (e.g. Economiesuisse, TCS, a tenants' association, a patient organisation) is explicitly quoted as the source of criticism.
+  "Lobby or Private Interest Group" — a named association, federation, union, or advocacy group (e.g. Economiesuisse, TCS, a tenants' association, a patient organisation) is explicitly quoted as the source of criticism.
 
-  General Public or Civil Society — private individuals, citizens, or reader-letter writers. Use this for letters to the editor, citizen testimonies, or unorganised members of the public.
+  "General Public or Civil Society" — private individuals, citizens, or reader-letter writers. Use this for letters to the editor, citizen testimonies, or unorganised members of the public.
 
-  Foreign Entity — a foreign government, international organisation, or foreign official is the primary source.
+  "Foreign Entity" — a foreign government, international organisation, or foreign official is the primary source.
 
-  Other — an expert, academic, auditor (CDF/EFK), lawyer, doctor, or any actor not fitting the categories above.
+  "Other" — an expert, academic, auditor (CDF/EFK), lawyer, doctor, or any actor not fitting the categories above.
 
 STEP 6 — NAME OF SOURCE  (only if STEP 2 = YES)
 Give the name exactly as it appears in the article.
