@@ -28,7 +28,9 @@ Does the article present a negative assessment — expressed or implied — of s
    (A) CANDIDATE TARGET — the specific Swiss public administration entity (if any) whose action, decision, or inaction is being evaluated negatively.
    (B) CANDIDATE SOURCE — the specific actor (if any) who expresses that negative evaluation.
    If you cannot name a SPECIFIC Swiss public administration entity as the candidate TARGET, go directly to the NO rules — the answer is almost certainly NO.
-   If the primary target of any criticism you find is a FOREIGN entity (a foreign government, foreign company, foreign individual), that criticism does not count for STEP 2, even if a Swiss official appears marginally in the article. <<
+   If the primary target of any criticism you find is a FOREIGN entity (a foreign government, foreign company, foreign individual), that criticism does not count for STEP 2, even if a Swiss official appears marginally in the article.
+
+   WEAK SIGNAL CHECK: After identifying a plausible TARGET and SOURCE, ask yourself: does the article contain an actor using evaluative, judgmental, or condemnatory language about that entity's PAST or CURRENT conduct? If the only negative-sounding content is (i) neutral reporting of a problem or challenge facing the entity, (ii) a description of difficult circumstances without blame attribution, or (iii) actors expressing different policy preferences for the future — then the answer is NO. A YES requires at least one actor (including the journalist through their framing) to explicitly assess or condemn the entity's conduct as wrong, inadequate, or harmful. <<
 
 >> DECISION RULE: Once you have identified a plausible TARGET and SOURCE from the pre-screen above, check for a YES signal by scanning the ENTIRE article. If you find even one YES signal anywhere — including in a subsection, a subheading, a reader letter, or a single sentence — the answer is YES. Only check the NO rules if you found no YES signal anywhere in the article. <<
 
@@ -77,11 +79,11 @@ STEP 3 — TYPE OF TARGETED ENTITY  (only if STEP 2 = YES)
 Choose the single best category from this list:
   Federal Department         — one of the 7 Federal Departments headed by a Federal Councillor (EDA, EDI, EJPD, VBS/DDPS, EFD, UVEK, WBF) or the Federal Chancellery (BK). Use this when the VBS, EFD, EJPD, EDA, etc. is the entity criticised, even if a named official is also mentioned. Also use when the Bundesrat/Federal Council as a collective body is criticised.
   Federal Agency or Civil Servant — offices or units WITHIN a Federal Department (e.g. SECO, fedpol, Armasuisse, BAG, BAZL, SEM, etc.) or a named individual civil servant (not a Federal Councillor). Note: if a Federal Councillor is criticised in their capacity as department head, prefer Federal Department over Political Figure.
-  Regulatory Agency          — independent bodies with a specific regulatory or supervisory mandate: FINMA, Swissmedic, WEKO/ComCo, ElCom, BAKOM, Eidgenössische Revisionsaufsichtsbehörde, etc. These are NOT offices of a Federal Department; they operate independently.
-  Political Figure           — a named elected or appointed political individual (Federal Councillor criticised in a personal/political capacity rather than as department head, member of parliament, cantonal councillor, mayor, etc.)
+  Regulatory Agency          — independent bodies with a specific regulatory or supervisory mandate: FINMA, Swissmedic, WEKO/ComCo, ElCom, BAKOM, Eidgenössische Revisionsaufsichtsbehörde, etc. These are NOT offices of a Federal Department; they operate independently. Examples: criticism of FINMA's banking supervision → Regulatory Agency; criticism of WEKO's fines → Regulatory Agency.
+  Political Figure           — a named elected or appointed political individual (Federal Councillor criticised in a personal/political capacity rather than as department head, member of parliament, cantonal councillor, mayor, etc.). Examples: a Federal Councillor criticised for their personal statements, communication style, or individual political positions → Political Figure; an MP criticised for their vote or behaviour → Political Figure. DISAMBIGUATION from Federal Department: ask whether the criticism targets the INSTITUTION's policy/decision or the INDIVIDUAL's personal conduct/positions. If it is primarily about the person, use Political Figure.
   Political Party            — a Swiss political party (SP, SVP, FDP, Mitte, Grüne, GLP, etc.)
-  Canton                     — a cantonal government, cantonal administration, or cantonal authority
-  Municipality               — a municipal government or local authority
+  Canton                     — a cantonal government, cantonal administration, cantonal authority, or cantonal police. Use this when the entity is explicitly identified as cantonal (e.g. "Kanton Zürich", "Kantonsregierung", "kantonale Behörden"). Do not default to Federal Department when the target is clearly cantonal.
+  Municipality               — a municipal government, city administration, or local authority (Gemeinde, Stadtrat, etc.). Use this when the entity is explicitly identified as a municipality or city-level authority. Do not conflate with Federal Department.
   Other                      — use only when none of the above categories fits
 
 STEP 4 — NAME OF TARGETED ENTITY  (only if STEP 2 = YES)
@@ -96,6 +98,12 @@ Who expresses the criticism? Choose the single best category from this list:
   General Public or Civil Society
   Foreign Entity
   Other
+
+IMPORTANT DISAMBIGUATION — JOURNALIST vs POLITICIAN OR PARTY:
+  • JOURNALIST (author or editorial stance): Use this when the criticism comes primarily from the article author's own words, framing, or narrative choices — including critical word choices, negative metaphors, or editorial judgements expressed in the author's voice — even if politicians, experts, or other actors are quoted within the article. The key question is: is the JOURNALIST doing the criticising (through their own writing), or are they merely reporting what someone else said?
+  • POLITICIAN OR PARTY: Use this ONLY when a named politician or party is the primary actor EXPLICITLY QUOTED making a critical statement about the Swiss administration. Quoting a politician who appears in the article does NOT automatically make the source "Politician or Party" — if the journalist's own framing is the dominant critical voice, use JOURNALIST.
+  • LOBBY OR PRIVATE INTEREST GROUP: Use this when a named association, business federation, advocacy group, union, or interest group is explicitly quoted or referenced as the source of criticism.
+  • OTHER: Use when the source is an academic, expert, auditor (e.g. CDF/EFK findings without a named actor), or any actor not fitting above categories.
 
 STEP 6 — NAME OF SOURCE  (only if STEP 2 = YES)
 Give the name exactly as it appears in the article text.
