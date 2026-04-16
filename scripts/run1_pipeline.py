@@ -4,7 +4,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
-import json
 import os
 import re
 import argparse
@@ -15,9 +14,11 @@ from src.runner import run_llm_dataframe, RunConfig
 from src.run1_prompts import SYSTEM_PROMPT, build_user_prompt
 from src.run1_config import build_mask, OUTPUT_COLS
 
+VALID_ORIGINS = {"FEDERAL_EXECUTIVE", "PARLIAMENT", "EXTERNAL"}
+
 
 def parse_output(raw: str) -> dict:
-    """Parse the LLM response into SWISS_CONTEXT and a JSON list of criticisms."""
+    """Parse the 6-line LLM response into a dict of output columns."""
     empty = {col: pd.NA for col in OUTPUT_COLS}
     if not raw:
         return empty
@@ -29,40 +30,52 @@ def parse_output(raw: str) -> dict:
         val = m.group(1).strip() if m else None
         return None if not val or val.upper() == "N/A" else val
 
-    swiss_raw = _extract(r"SWISS_CONTEXT:\s*(YES|NO)\b")
+    swiss_raw  = _extract(r"SWISS_CONTEXT:\s*(YES|NO)\b")
+    crit_raw   = _extract(r"CRITICISM:\s*(YES|NO)\b")
+    tgt        = _extract(r"TARGETED_ENTITY:\s*(.+)")
+    src_name   = _extract(r"SOURCE_NAME:\s*(.+)")
+    src_origin = _extract(r"SOURCE_ORIGIN:\s*(\w+)")
+    topic      = _extract(r"CRITICISM_TOPIC:\s*(.+)")
+
     if swiss_raw is None:
         return empty
 
     swiss = swiss_raw.upper()
 
     if swiss != "YES":
-        return {"SWISS_CONTEXT": swiss, "CRITICISMS": pd.NA}
+        return {
+            "SWISS_CONTEXT":   swiss,
+            "CRITICISM":       "N/A",
+            "TARGETED_ENTITY": pd.NA,
+            "SOURCE_NAME":     pd.NA,
+            "SOURCE_ORIGIN":   pd.NA,
+            "CRITICISM_TOPIC": pd.NA,
+        }
 
-    # Explicit no-criticism marker
-    if re.search(r"\bNO_CRITICISM\b", s, flags=re.IGNORECASE):
-        return {"SWISS_CONTEXT": swiss, "CRITICISMS": pd.NA}
+    criticism = crit_raw.upper() if crit_raw else "N/A"
 
-    # Collect all numbered criticism blocks
-    indices = sorted(set(re.findall(r"TARGET_(\d+)\s*:", s, flags=re.IGNORECASE)), key=int)
+    if criticism != "YES":
+        return {
+            "SWISS_CONTEXT":   swiss,
+            "CRITICISM":       criticism,
+            "TARGETED_ENTITY": pd.NA,
+            "SOURCE_NAME":     pd.NA,
+            "SOURCE_ORIGIN":   pd.NA,
+            "CRITICISM_TOPIC": pd.NA,
+        }
 
-    criticisms = []
-    for i in indices:
-        target = _extract(rf"TARGET_{i}\s*:\s*(.+)")
-        source = _extract(rf"SOURCE_{i}\s*:\s*(.+)")
-        topic  = _extract(rf"TOPIC_{i}\s*:\s*(.+)")
-        if target or source or topic:
-            criticisms.append({
-                "target": target or "",
-                "source": source or "",
-                "topic":  topic  or "",
-            })
-
-    if not criticisms:
-        return {"SWISS_CONTEXT": swiss, "CRITICISMS": pd.NA}
+    # Normalise SOURCE_ORIGIN — accept only valid values
+    origin_norm = src_origin.upper() if src_origin else None
+    if origin_norm not in VALID_ORIGINS:
+        origin_norm = None
 
     return {
-        "SWISS_CONTEXT": swiss,
-        "CRITICISMS":    json.dumps(criticisms, ensure_ascii=False),
+        "SWISS_CONTEXT":   swiss,
+        "CRITICISM":       "YES",
+        "TARGETED_ENTITY": tgt,
+        "SOURCE_NAME":     src_name,
+        "SOURCE_ORIGIN":   origin_norm,
+        "CRITICISM_TOPIC": topic,
     }
 
 
@@ -70,11 +83,10 @@ def main() -> int:
     ap = argparse.ArgumentParser()
 
     # --- I/O ---
-    ap.add_argument("--input",        required=True, help="Path to input .parquet or .csv")
-    ap.add_argument("--output_base",  required=True, help="Base path for outputs (no extension)")
-    ap.add_argument("--text_col",     required=True, help="Column containing the article text")
-    ap.add_argument("--n_rows",       type=int, default=0,
-                    help="Number of rows to run (0 = full dataset)")
+    ap.add_argument("--input",        required=True)
+    ap.add_argument("--output_base",  required=True)
+    ap.add_argument("--text_col",     required=True)
+    ap.add_argument("--n_rows",       type=int, default=0)
 
     # --- Model ---
     ap.add_argument("--model_path",        required=True)
@@ -93,19 +105,16 @@ def main() -> int:
 
     args = ap.parse_args()
 
-    # --- Load ---
     df = pd.read_parquet(args.input) if args.input.endswith(".parquet") else pd.read_csv(args.input)
 
     if args.n_rows > 0:
         df = df.head(args.n_rows).copy()
         print(f"[n_rows] Subsetting to first {args.n_rows} rows")
 
-    # --- Prepare output columns ---
     for col in OUTPUT_COLS:
         if col not in df.columns:
             df[col] = pd.Series(pd.NA, index=df.index, dtype="string")
 
-    # --- Init client ---
     client = TransformersClient(
         LLMConfig(
             model_path=args.model_path,
@@ -138,7 +147,6 @@ def main() -> int:
         skip_if_already_filled=OUTPUT_COLS[0],  # resume on SWISS_CONTEXT
     )
 
-    # --- Save ---
     job_id       = os.environ.get("SLURM_JOB_ID") or args.job_id or "nojobid"
     base         = f"{args.output_base}_job{job_id}"
     parquet_path = base + ".parquet"

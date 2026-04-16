@@ -3,13 +3,15 @@ from __future__ import annotations
 import pandas as pd
 
 # ---------------------------------------------------------------------------
-# Output columns
-# SWISS_CONTEXT is used as the resumability key (skip rows already filled).
-# CRITICISMS stores a JSON list of {target, source, topic} dicts, or pd.NA.
+# Output columns — order matters: SWISS_CONTEXT is used as the resumability key
 # ---------------------------------------------------------------------------
 OUTPUT_COLS = [
-    "SWISS_CONTEXT",   # string — YES / NO
-    "CRITICISMS",      # string — JSON list of {target, source, topic} dicts, or N/A
+    "SWISS_CONTEXT",      # string — YES / NO
+    "CRITICISM",          # string — YES / NO / N/A
+    "TARGETED_ENTITY",    # string — name as in article or N/A
+    "SOURCE_NAME",        # string — name + role/title as in article or N/A
+    "SOURCE_ORIGIN",      # string — FEDERAL_EXECUTIVE / PARLIAMENT / EXTERNAL / N/A
+    "CRITICISM_TOPIC",    # string — 1-2 sentences or N/A
 ]
 
 # ---------------------------------------------------------------------------
