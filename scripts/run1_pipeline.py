@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
+import json
 import os
 import re
 import argparse
@@ -16,7 +17,7 @@ from src.run1_config import build_mask, OUTPUT_COLS
 
 
 def parse_output(raw: str) -> dict:
-    """Parse the 8-line LLM response into a dict of output columns."""
+    """Parse the LLM response into SWISS_CONTEXT and a JSON list of criticisms."""
     empty = {col: pd.NA for col in OUTPUT_COLS}
     if not raw:
         return empty
@@ -26,59 +27,42 @@ def parse_output(raw: str) -> dict:
     def _extract(pattern: str) -> str | None:
         m = re.search(pattern, s, flags=re.IGNORECASE | re.MULTILINE)
         val = m.group(1).strip() if m else None
-        return None if val and val.upper() == "N/A" else val
+        return None if not val or val.upper() == "N/A" else val
 
-    swiss_raw   = _extract(r"SWISS_CONTEXT:\s*(YES|NO)\b")
-    crit_raw    = _extract(r"CRITICISM:\s*(YES|NO)\b")
-    topic       = _extract(r"CRITICISM_TOPIC:\s*(.+)")
-    tgt_type    = _extract(r"TARGETED_ENTITY_TYPE:\s*(.+)")
-    tgt_name    = _extract(r"TARGETED_ENTITY_NAME:\s*(.+)")
-    src_type    = _extract(r"SOURCE_TYPE:\s*(.+)")
-    src_name    = _extract(r"SOURCE_NAME:\s*(.+)")
-    pop_raw     = _extract(r"POPULIST_RHETORIC:\s*(YES|NO)\b")
-
+    swiss_raw = _extract(r"SWISS_CONTEXT:\s*(YES|NO)\b")
     if swiss_raw is None:
         return empty
 
-    swiss = swiss_raw.upper()  # "YES" or "NO" — kept as string to match gold data
+    swiss = swiss_raw.upper()
 
-    # If no Swiss context, cascade everything to N/A
     if swiss != "YES":
-        return {
-            "SWISS_CONTEXT":        swiss,
-            "CRITICISM":            "N/A",
-            "CRITICISM_TOPIC":      pd.NA,
-            "TARGETED_ENTITY_TYPE": pd.NA,
-            "TARGETED_ENTITY_NAME": pd.NA,
-            "SOURCE_TYPE":          pd.NA,
-            "SOURCE_NAME":          pd.NA,
-            "POPULIST_RHETORIC":    "N/A",
-        }
+        return {"SWISS_CONTEXT": swiss, "CRITICISMS": pd.NA}
 
-    criticism = crit_raw.upper() if crit_raw else "N/A"
+    # Explicit no-criticism marker
+    if re.search(r"\bNO_CRITICISM\b", s, flags=re.IGNORECASE):
+        return {"SWISS_CONTEXT": swiss, "CRITICISMS": pd.NA}
 
-    # If Swiss but no criticism, cascade entity/source/topic/populist to N/A
-    if criticism != "YES":
-        return {
-            "SWISS_CONTEXT":        swiss,
-            "CRITICISM":            criticism,
-            "CRITICISM_TOPIC":      pd.NA,
-            "TARGETED_ENTITY_TYPE": pd.NA,
-            "TARGETED_ENTITY_NAME": pd.NA,
-            "SOURCE_TYPE":          pd.NA,
-            "SOURCE_NAME":          pd.NA,
-            "POPULIST_RHETORIC":    "N/A",
-        }
+    # Collect all numbered criticism blocks
+    indices = sorted(set(re.findall(r"TARGET_(\d+)\s*:", s, flags=re.IGNORECASE)), key=int)
+
+    criticisms = []
+    for i in indices:
+        target = _extract(rf"TARGET_{i}\s*:\s*(.+)")
+        source = _extract(rf"SOURCE_{i}\s*:\s*(.+)")
+        topic  = _extract(rf"TOPIC_{i}\s*:\s*(.+)")
+        if target or source or topic:
+            criticisms.append({
+                "target": target or "",
+                "source": source or "",
+                "topic":  topic  or "",
+            })
+
+    if not criticisms:
+        return {"SWISS_CONTEXT": swiss, "CRITICISMS": pd.NA}
 
     return {
-        "SWISS_CONTEXT":        swiss,
-        "CRITICISM":            "YES",
-        "CRITICISM_TOPIC":      topic,
-        "TARGETED_ENTITY_TYPE": tgt_type,
-        "TARGETED_ENTITY_NAME": tgt_name,
-        "SOURCE_TYPE":          src_type,
-        "SOURCE_NAME":          src_name,
-        "POPULIST_RHETORIC":    pop_raw.upper() if pop_raw else pd.NA,
+        "SWISS_CONTEXT": swiss,
+        "CRITICISMS":    json.dumps(criticisms, ensure_ascii=False),
     }
 
 

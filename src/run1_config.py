@@ -1,26 +1,19 @@
-# src/config.py
-#
-# Task-level configuration only.
-# Infrastructure (model path, I/O paths, batch params) lives in run.sbatch.
+# src/run1_config.py
 from __future__ import annotations
 import pandas as pd
 
 # ---------------------------------------------------------------------------
-# Output columns — order matters: SWISS_CONTEXT is used as the resumability key
+# Output columns
+# SWISS_CONTEXT is used as the resumability key (skip rows already filled).
+# CRITICISMS stores a JSON list of {target, source, topic} dicts, or pd.NA.
 # ---------------------------------------------------------------------------
 OUTPUT_COLS = [
-    "SWISS_CONTEXT",          # string — YES / NO
-    "CRITICISM",              # string — YES / NO / N/A
-    "CRITICISM_TOPIC",        # string — 1-2 sentences or N/A
-    "TARGETED_ENTITY_TYPE",   # string — category or N/A
-    "TARGETED_ENTITY_NAME",   # string — name as in text or N/A
-    "SOURCE_TYPE",            # string — category or N/A
-    "SOURCE_NAME",            # string — name as in text or N/A
-    "POPULIST_RHETORIC",      # string — YES / NO / N/A
+    "SWISS_CONTEXT",   # string — YES / NO
+    "CRITICISMS",      # string — JSON list of {target, source, topic} dicts, or N/A
 ]
 
 # ---------------------------------------------------------------------------
-# Row selection mask — edit to filter which rows are sent to the LLM
+# Row selection mask
 # ---------------------------------------------------------------------------
 def build_mask(df: pd.DataFrame, *, text_col: str) -> pd.Series:
     """Return a boolean Series selecting rows to send to the LLM."""
