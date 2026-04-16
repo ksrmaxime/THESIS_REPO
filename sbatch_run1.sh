@@ -120,18 +120,8 @@ cp "$PRED_CSV"       "$RUN_DIR/results.csv"        || true
 cp "src/run1_prompts.py"  "$RUN_DIR/prompts_used.py"    || true
 cp "$0"              "$RUN_DIR/sbatch_used.sbatch"  || true
 
-# move eval reports
-if [ -d "$RUN_DIR_TMP/eval" ]; then
-  mv "$RUN_DIR_TMP/eval" "$RUN_DIR/eval"
-fi
-
-# cleanup temp dir
-rmdir "$RUN_DIR_TMP" 2>/dev/null || true
-
 echo "=== ARCHIVED ==="
 echo "Run folder : $RUN_DIR"
 echo "  results.csv"
 echo "  prompts_used.py"
 echo "  sbatch_used.sbatch"
-echo "  eval/"
-echo "Score: ${SCORE}%"

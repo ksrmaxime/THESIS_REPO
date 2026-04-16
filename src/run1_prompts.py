@@ -57,11 +57,16 @@ FEDERAL OFFICES AND AGENCIES (non-exhaustive — include any federal office/Bund
 The criticism does not need to be the article's main topic — a single sentence qualifies.
 A negative assessment = any actor judges the entity's conduct, decision, or inaction as wrong, inadequate, or harmful.
 
+Count as YES:
+  - One department or its secretariat explicitly opposing or criticising another department's proposal, decision, or current practice — even if expressed as "vivement critiqué", "s'y oppose", "stark kritisiert". Example: the secretariat of WBF/DEFR explicitly criticising UVEK's proposed travel policy = YES (target: UVEK, source: WBF/DEFR).
+  - Any actor condemning the current or past conduct of a federal entity listed above.
+
 Do NOT count:
   - Purely factual reporting with no condemnation from any actor.
-  - A federal official advocating for new policies (they are a source, not a target).
-  - Calls for future action that do not also condemn past conduct.
-  - Criticism directed exclusively at cantonal/municipal governments or foreign entities.
+  - A federal official presenting or defending their own department's proposal (they are source, not target).
+  - Calls for future action that do not also condemn current or past conduct.
+  - Criticism directed exclusively at cantonal/municipal governments, foreign entities, private companies, or individuals with no federal mandate.
+  - IMPORTANT: If the entity you identified as TARGET does not appear explicitly in the list above, write N/A for TARGETED_ENTITY and NO for CRITICISM — do not invent or infer a federal entity that is not clearly named or implied by the article.
 
 STEP 3 — TARGETED ENTITY  (only if STEP 2 = YES)
 Give the name of the criticised entity exactly as it appears in the article (acronym, full name, or as referred to). If it is a department or office from the list above, use the name from the list.
@@ -69,20 +74,22 @@ Give the name of the criticised entity exactly as it appears in the article (acr
 STEP 4 — SOURCE OF CRITICISM  (only if STEP 2 = YES)
 
 (A) SOURCE_NAME: Give the name of the actor who makes the criticism, followed by their role or title as the article describes them.
-    Examples: "Viola Amherd, Chefin VBS"; "Roger Schärer, Herrliberg ZH"; "Me Valérie Debernardi, avocate"; "Andreas Kistler, Chefarzt Kantonsspital"; "journalist: René Donzé".
+    Examples: "Viola Amherd, Chefin VBS"; "Roger Schärer, Herrliberg ZH"; "Me Valérie Debernardi, avocate"; "Andreas Kistler, Chefarzt Kantonsspital"; "journalist: René Donzé"; "Secrétariat général du DEFR".
     First ask: is the critical argument explicitly attributed to a quoted or paraphrased actor? If yes, that actor is the source. Use the journalist only if no external actor is identifiable.
+    CRITICAL RULE: The SOURCE must be a DIFFERENT entity from the TARGET. If the only actor you can identify is the same entity as the TARGET (e.g. the EDA cannot criticise itself), then the source is the journalist or author. Never write the same entity as both TARGET and SOURCE.
 
 (B) SOURCE_ORIGIN: Classify the source into exactly one of these three categories:
-    FEDERAL_EXECUTIVE — the source currently holds a leading position within the Swiss federal executive: a Federal Councillor (Bundesrat/Conseiller fédéral), a State Secretary (Staatssekretär), or the director of a federal office or agency. Important: a Federal Councillor criticising another department is FEDERAL_EXECUTIVE.
+    FEDERAL_EXECUTIVE — the source CURRENTLY holds a leading position within the Swiss federal executive: a Federal Councillor (Bundesrat/Conseiller fédéral), a State Secretary (Staatssekretär), the director of a federal office or agency, or the secretariat of a federal department acting in an official capacity. Important: a Federal Councillor or department criticising another department = FEDERAL_EXECUTIVE. FORMER officials (ehemaliger, ancien, ex-, retraité, retired) do NOT qualify — classify them as EXTERNAL.
     PARLIAMENT — the source is a member of the Swiss federal parliament (National Council or Council of States) or a parliamentary commission, acting in that capacity.
-    EXTERNAL — everyone else: political parties as institutions, cantonal or municipal politicians, civil society, citizens, experts, lawyers, journalists, foreign actors, international organisations, or any actor not in the two categories above.
+    EXTERNAL — everyone else: political parties as institutions, cantonal or municipal politicians, civil society, citizens, experts, lawyers, journalists, former officials, foreign actors, international organisations, or any actor not currently in the two categories above.
 
 STEP 5 — TOPIC OF CRITICISM  (only if STEP 2 = YES)
 Summarise in 1–2 sentences what the criticism is about.
 
 --- OUTPUT FORMAT ---
-Respond with EXACTLY these 6 lines and nothing else:
+Respond with EXACTLY these 7 lines and nothing else:
 
+REASONING: [In 2-3 sentences: identify the candidate target and source, explain whether the conduct described counts as criticism, and state why. This reasoning must be consistent with all answers below.]
 SWISS_CONTEXT: YES or NO
 CRITICISM: YES or NO or N/A
 TARGETED_ENTITY: [name as in article] or N/A

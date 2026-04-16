@@ -18,7 +18,9 @@ VALID_ORIGINS = {"FEDERAL_EXECUTIVE", "PARLIAMENT", "EXTERNAL"}
 
 
 def parse_output(raw: str) -> dict:
-    """Parse the 6-line LLM response into a dict of output columns."""
+    """Parse the 7-line LLM response into a dict of output columns.
+    The REASONING line is consumed by the model for consistency but not stored.
+    """
     empty = {col: pd.NA for col in OUTPUT_COLS}
     if not raw:
         return empty
