@@ -47,28 +47,28 @@ Choose one:
   "Municipality"              — a city or local authority (Gemeinde, Stadtrat).
   "Other"                     — none of the above fits.
 
-STEP 4 — NAME OF TARGETED ENTITY  (only if STEP 2 = YES)
-Give the name exactly as it appears in the article.
+STEP 4 — DESCRIPTION OF TARGETED ENTITY  (only if STEP 2 = YES)
+Give the name of the targeted entity as it appears in the article, followed by their role or affiliation if mentioned (e.g. "Viola Amherd, Chefin VBS"; "DFAE"; "Kantonspolizei Zürich"; "Stadt Bern, Stadtrat"). If the entity is referred to only by its acronym or institutional name, that is sufficient.
 
 STEP 5 — TYPE OF SOURCE OF CRITICISM  (only if STEP 2 = YES)
-Who primarily expresses the criticism? Choose one:
+First ask: is the critical argument explicitly attributed to a specific actor quoted in the article (direct quote, indirect quote, or paraphrase)? If yes, that actor is the source — not the journalist, even if the journalist chose to include the quote. Only use "Journalist" if the critical judgement is expressed exclusively in the journalist's own voice with no identifiable external actor behind it.
 
-  "Journalist (author or editorial stance)" — the criticism comes from the journalist's own voice: their word choices, framing, narrative structure, subheadings, or editorial tone. Even if the article quotes others, the dominant critical voice belongs to the author. Use this when no single external actor is explicitly quoted as the critic.
+  "Journalist (author or editorial stance)" — the critical judgement is expressed solely through the author's own word choices, framing, subheadings, or editorial tone, with no external actor quoted or paraphrased as the origin of that argument. If an actor is cited and the journalist merely relays their criticism, the actor is the source.
 
-  "Politician or Party" — a named elected official (Federal Councillor, MP, cantonal councillor) or a named Swiss political party is explicitly quoted making a critical statement. Key signal: there is a direct or indirect quote attributing the condemnation to that person or party. Do NOT use this if the journalist is merely reporting a politician's existence in the story.
+  "Politician or Party" — a named elected official (Federal Councillor, MP, cantonal councillor) or a named Swiss political party is explicitly quoted or paraphrased making the critical statement.
 
-  "Another Federal Department or Public Administration Entity" — a Swiss public body (a department, agency, cantonal government, municipality) explicitly opposes or condemns another public body's decision or conduct. Key signal: the source entity is itself part of the Swiss administration.
+  "Another Federal Department or Public Administration Entity" — a Swiss public body explicitly opposes or condemns another public body's decision or conduct; the source entity is itself part of the Swiss administration.
 
-  "Lobby or Private Interest Group" — a named association, federation, union, or advocacy group (e.g. Economiesuisse, TCS, a tenants' association, a patient organisation) is explicitly quoted as the source of criticism.
+  "Lobby or Private Interest Group" — a named association, federation, union, or advocacy group (e.g. Economiesuisse, TCS, a tenants' association) is quoted or paraphrased as the source.
 
-  "General Public or Civil Society" — private individuals, citizens, or reader-letter writers. Use this for letters to the editor, citizen testimonies, or unorganised members of the public.
+  "General Public or Civil Society" — private individuals, citizens, or reader-letter writers expressing criticism in their own name.
 
   "Foreign Entity" — a foreign government, international organisation, or foreign official is the primary source.
 
-  "Other" — an expert, academic, auditor (CDF/EFK), lawyer, doctor, or any actor not fitting the categories above.
+  "Other" — an expert, academic, auditor (CDF/EFK), lawyer, doctor, or any named actor not fitting the categories above.
 
-STEP 6 — NAME OF SOURCE  (only if STEP 2 = YES)
-Give the name exactly as it appears in the article.
+STEP 6 — DESCRIPTION OF SOURCE  (only if STEP 2 = YES)
+Give the name of the source as it appears in the article, followed by their role or affiliation if mentioned (e.g. "Valérie Debernardi, avocate"; "Roger Schärer, Herrliberg ZH"; "Secrétariat général du DEFR"; "Andreas Kistler, Chefarzt Kantonsspital"). If the source is anonymous or unspecified, write "N/A".
 
 STEP 7 — POPULIST RHETORIC  (only if STEP 2 = YES)
 Does the criticism pit "the people" against "corrupt elites", use emotional or hyperbolic language, or frame the administration as self-serving?
@@ -83,9 +83,9 @@ Respond with EXACTLY these 8 lines and nothing else:
 SWISS_CONTEXT: YES or NO
 CRITICISM: YES or NO or N/A
 TARGETED_ENTITY_TYPE: [category from list] or N/A
-TARGETED_ENTITY_NAME: [name as in text] or N/A
+TARGETED_ENTITY_NAME: [name + role/affiliation if available] or N/A
 SOURCE_TYPE: [category from list] or N/A
-SOURCE_NAME: [name as in text] or N/A
+SOURCE_NAME: [name + role/affiliation if available] or N/A
 POPULIST_RHETORIC: YES or NO or N/A
 CRITICISM_TOPIC: [1-2 sentences] or N/A
 
