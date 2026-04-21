@@ -79,9 +79,9 @@ python scripts/run1_pipeline.py \
   --temperature       "$TEMPERATURE"
 
 # =============================================================================
-# SCORING — disabled: gold data not yet aligned with new output columns
-# To re-enable, update --cols and --col_kinds to match OUTPUT_COLS in run1_config.py:
-#   SWISS_CONTEXT, CRITICISM, TARGETED_ENTITY, SOURCE_NAME, SOURCE_ORIGIN, CRITICISM_TOPIC
+# SCORING — disabled: gold data not yet available for run1 outputs
+# To re-enable, update GOLD_CSV and uncomment the block below.
+# OUTPUT_COLS for run1: SWISS_CONTEXT, CRITICISM, CRITICISM_SUMMARY
 # =============================================================================
 
 # PRED_CSV="${OUTPUT_BASE}_job${SLURM_JOB_ID}.csv"
@@ -91,8 +91,8 @@ python scripts/run1_pipeline.py \
 #   --pred       "$PRED_CSV" \
 #   --gold       "$GOLD_CSV" \
 #   --id_col     article_id \
-#   --cols       "SWISS_CONTEXT,CRITICISM,TARGETED_ENTITY,SOURCE_NAME,SOURCE_ORIGIN,CRITICISM_TOPIC" \
-#   --col_kinds  "TARGETED_ENTITY=text,SOURCE_NAME=text,CRITICISM_TOPIC=text" \
+#   --cols       "SWISS_CONTEXT,CRITICISM,CRITICISM_SUMMARY" \
+#   --col_kinds  "CRITICISM_SUMMARY=text" \
 #   --extra_cols "$TEXT_COL" \
 #   --report_dir "$RUN_DIR_TMP/eval" \
 #   --print_errors_head 10 \

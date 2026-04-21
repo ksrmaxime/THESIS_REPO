@@ -14,13 +14,8 @@ from src.runner import run_llm_dataframe, RunConfig
 from src.run1_prompts import SYSTEM_PROMPT, build_user_prompt
 from src.run1_config import build_mask, OUTPUT_COLS
 
-VALID_ORIGINS = {"FEDERAL_EXECUTIVE", "PARLIAMENT", "EXTERNAL"}
-
-
 def parse_output(raw: str) -> dict:
-    """Parse the 7-line LLM response into a dict of output columns.
-    The REASONING line is consumed by the model for consistency but not stored.
-    """
+    """Parse the 3-line LLM response into a dict of output columns."""
     empty = {col: pd.NA for col in OUTPUT_COLS}
     if not raw:
         return empty
@@ -32,12 +27,9 @@ def parse_output(raw: str) -> dict:
         val = m.group(1).strip() if m else None
         return None if not val or val.upper() == "N/A" else val
 
-    swiss_raw  = _extract(r"SWISS_CONTEXT:\s*(YES|NO)\b")
-    crit_raw   = _extract(r"CRITICISM:\s*(YES|NO)\b")
-    tgt        = _extract(r"TARGETED_ENTITY:\s*(.+)")
-    src_name   = _extract(r"SOURCE_NAME:\s*(.+)")
-    src_origin = _extract(r"SOURCE_ORIGIN:\s*(\w+)")
-    topic      = _extract(r"CRITICISM_TOPIC:\s*(.+)")
+    swiss_raw = _extract(r"SWISS_CONTEXT:\s*(YES|NO)\b")
+    crit_raw  = _extract(r"CRITICISM:\s*(YES|NO)\b")
+    summary   = _extract(r"CRITICISM_SUMMARY:\s*(.+)")
 
     if swiss_raw is None:
         return empty
@@ -46,38 +38,17 @@ def parse_output(raw: str) -> dict:
 
     if swiss != "YES":
         return {
-            "SWISS_CONTEXT":   swiss,
-            "CRITICISM":       "N/A",
-            "TARGETED_ENTITY": pd.NA,
-            "SOURCE_NAME":     pd.NA,
-            "SOURCE_ORIGIN":   pd.NA,
-            "CRITICISM_TOPIC": pd.NA,
+            "SWISS_CONTEXT":    swiss,
+            "CRITICISM":        "NO",
+            "CRITICISM_SUMMARY": pd.NA,
         }
 
-    criticism = crit_raw.upper() if crit_raw else "N/A"
-
-    if criticism != "YES":
-        return {
-            "SWISS_CONTEXT":   swiss,
-            "CRITICISM":       criticism,
-            "TARGETED_ENTITY": pd.NA,
-            "SOURCE_NAME":     pd.NA,
-            "SOURCE_ORIGIN":   pd.NA,
-            "CRITICISM_TOPIC": pd.NA,
-        }
-
-    # Normalise SOURCE_ORIGIN — accept only valid values
-    origin_norm = src_origin.upper() if src_origin else None
-    if origin_norm not in VALID_ORIGINS:
-        origin_norm = None
+    criticism = crit_raw.upper() if crit_raw else "NO"
 
     return {
-        "SWISS_CONTEXT":   swiss,
-        "CRITICISM":       "YES",
-        "TARGETED_ENTITY": tgt,
-        "SOURCE_NAME":     src_name,
-        "SOURCE_ORIGIN":   origin_norm,
-        "CRITICISM_TOPIC": topic,
+        "SWISS_CONTEXT":    swiss,
+        "CRITICISM":        criticism,
+        "CRITICISM_SUMMARY": summary if criticism == "YES" else pd.NA,
     }
 
 

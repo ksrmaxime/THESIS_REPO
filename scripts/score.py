@@ -69,7 +69,7 @@ def main() -> int:
     ap.add_argument("--use_row_order", action="store_true", help="Compare by row order instead of explicit ID")
     ap.add_argument("--max_rows", type=int, default=None, help="Keep only the first N rows from each file")
     ap.add_argument("--keep_na", action="store_true", help="Keep NA-vs-NA / NA-vs-value pairs in evaluation")
-    ap.add_argument("--col_kinds", default="", help="Per-column kinds, e.g. TARGETED_ENTITY_NAME=text,CRITICISM_TOPIC=text")
+    ap.add_argument("--col_kinds", default="", help="Per-column kinds, e.g. CRITICISM_SUMMARY=text")
     ap.add_argument("--list_seps", default="", help="Per-column list separators, e.g. topics=|")
     ap.add_argument("--report_dir", default=None, help="Directory where evaluation reports will be saved")
     ap.add_argument("--extra_cols", default="", help="Comma-separated columns from pred to include in error files, e.g. text")
