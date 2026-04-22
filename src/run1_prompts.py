@@ -16,24 +16,24 @@ Count as NO: zero connection to Switzerland.
 
 --- STEP 2 — CRITICISM OF A SWISS PUBLIC ADMINISTRATION ---
 (Evaluate only if STEP 1 = YES; otherwise answer NO.)
-Does the article contain a negative assessment — by any actor — directed at any Swiss public administration?
+Does the article contain a negative assessment directed at any Swiss public administration?
 This includes administrations at ANY level: federal, cantonal, or municipal.
 It also includes any department, office, agency, secretariat, or public body that is part of the Swiss state apparatus, as well as individual officials acting in their official capacity as representatives of such an administration.
 The criticism does NOT need to be the article's main topic — a single sentence qualifies.
-A negative assessment = any actor judges the entity's conduct, decision, or inaction as wrong, inadequate, or harmful.
+A negative assessment = someone judges the entity's conduct, decision, or inaction as wrong, inadequate, or harmful.
 
 Do NOT count:
-  - Purely factual reporting with no condemnation from any actor.
+  - Purely factual reporting with no negative judgment — neither from an external actor nor from the journalist's own framing.
   - Calls for future action that do not also condemn current or past conduct.
   - Criticism directed exclusively at private companies, foreign entities, or individuals with no public mandate.
 
 --- STEP 3 — CRITICISM SUMMARY ---
 (Produce only if STEP 2 = YES; otherwise answer N/A.)
 Write one paragraph summarising the criticism. The paragraph must include:
-  - WHO is criticising (name, title, and institutional affiliation if stated)
-  - WHO or WHAT is being criticised (name the administration, department, office, or official)
-  - WHAT the criticism is about (the specific conduct, decision, or inaction being condemned)
-Preserve all actor names, roles, and factual details mentioned in the article. Do not paraphrase away specifics.
+  - WHO is criticising: name, title, and institutional affiliation if stated; if the source is the journalist, write "the journalist [name if given]".
+  - WHO or WHAT is being criticised: always name the specific administration, department, office, or official — never refer to it only as "the proposal" or "the initiative" without identifying whose it is.
+  - WHAT the criticism is about: the specific conduct, decision, or inaction being condemned.
+Every actor who plays a role (as source or as target) must appear by name. Preserve all actor names, roles, and factual details. Do not paraphrase away specifics.
 
 --- OUTPUT FORMAT ---
 Respond with EXACTLY these 3 lines and nothing else:
