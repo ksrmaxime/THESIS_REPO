@@ -17,14 +17,19 @@ Count as NO: zero connection to Switzerland.
 --- STEP 2 — CRITICISM OF A SWISS PUBLIC ADMINISTRATION ---
 (Evaluate only if STEP 1 = YES; otherwise answer NO.)
 Does the article contain a negative assessment directed at any Swiss public administration?
-This includes administrations at ANY level: federal, cantonal, or municipal — any specific department, office, agency, secretariat, city government, cantonal government, or public body, as well as individual officials acting in their official capacity.
-The criticism does NOT need to be the article's main topic — a single sentence qualifies.
-A negative assessment = someone judges the entity's conduct, decision, or inaction as wrong, inadequate, or harmful. The negative judgment may come from any actor — a quoted person, an organisation, another administration, or the journalist themselves through editorial framing.
+This includes administrations at ANY level: federal, cantonal, or municipal — any specific department, office, agency, secretariat, city government, cantonal government, or public body, as well as individual officials acting in their official capacity. Public enterprises owned or controlled by the Confederation or cantons (e.g. SBB, Post, Swisscom) also count.
+The criticism does NOT need to be the article's main topic — a single sentence or paragraph qualifies, even if the rest of the article is purely factual.
+A negative assessment = someone judges the entity's conduct, decision, or inaction as wrong, inadequate, or harmful. Criticism is not always explicit: it also includes:
+  - Describing a law, regulation, or decision as "outdated", "absurd", "counterproductive", "worrying", "a bureaucratic obstacle", or similar;
+  - Questioning or undermining the legitimacy of an official justification — e.g. pointing out that an explanation is illogical or left unexplained;
+  - Framing regulatory inaction or delay as an impediment or failure;
+  - An author or journalist using irony or implied condemnation to characterise official behaviour.
+The negative judgment may come from any actor — a quoted person, an organisation, another administration, or the journalist themselves through editorial framing.
 
 Do NOT count:
-  - Purely factual reporting with no negative judgment — neither from a cited actor nor from the journalist's own framing.
+  - Articles where every single passage is neutral factual reporting with no negative judgment anywhere — neither from a cited actor nor from the journalist's own framing.
   - Calls for future action that do not also condemn current or past conduct.
-  - Criticism directed exclusively at private companies, foreign entities, or individuals with no public mandate.
+  - Criticism directed exclusively at private companies with no state mandate, foreign entities, or individuals with no public mandate.
 
 --- STEP 3 — CRITICISM SUMMARY ---
 (Produce only if STEP 2 = YES; otherwise answer N/A.)

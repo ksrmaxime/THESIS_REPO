@@ -79,34 +79,30 @@ python scripts/run1_pipeline.py \
   --temperature       "$TEMPERATURE"
 
 # =============================================================================
-# SCORING — disabled: gold data not yet available for run1 outputs
-# To re-enable, update GOLD_CSV and uncomment the block below.
-# OUTPUT_COLS for run1: SWISS_CONTEXT, CRITICISM, CRITICISM_SUMMARY
+# SCORING — SWISS_CONTEXT and CRITICISM only (CRITICISM_SUMMARY excluded)
 # =============================================================================
 
-# PRED_CSV="${OUTPUT_BASE}_job${SLURM_JOB_ID}.csv"
-# RUN_DIR_TMP="${WORKDIR}/data/output/run_job${SLURM_JOB_ID}"
-# mkdir -p "$RUN_DIR_TMP"
-# SCORE_LOG=$(python scripts/score.py \
-#   --pred       "$PRED_CSV" \
-#   --gold       "$GOLD_CSV" \
-#   --id_col     article_id \
-#   --cols       "SWISS_CONTEXT,CRITICISM,CRITICISM_SUMMARY" \
-#   --col_kinds  "CRITICISM_SUMMARY=text" \
-#   --extra_cols "$TEXT_COL" \
-#   --report_dir "$RUN_DIR_TMP/eval" \
-#   --print_errors_head 10 \
-#   --max_rows 300)
-# echo "$SCORE_LOG"
-# SCORE=$(echo "$SCORE_LOG" | awk '/^Similarity:/ {gsub(/%/,"",$2); print $2; exit}')
-# SCORE=${SCORE:-NA}
+PRED_CSV="${OUTPUT_BASE}_job${SLURM_JOB_ID}.csv"
+RUN_DIR_TMP="${WORKDIR}/data/output/run_job${SLURM_JOB_ID}"
+mkdir -p "$RUN_DIR_TMP"
+SCORE_LOG=$(python scripts/score.py \
+  --pred       "$PRED_CSV" \
+  --gold       "$GOLD_CSV" \
+  --id_col     article_id \
+  --cols       "SWISS_CONTEXT,CRITICISM" \
+  --extra_cols "$TEXT_COL" \
+  --report_dir "$RUN_DIR_TMP/eval" \
+  --print_errors_head 10 \
+  --max_rows "$N_ROWS")
+echo "$SCORE_LOG"
+SCORE=$(echo "$SCORE_LOG" | awk '/^Similarity:/ {gsub(/%/,"",$2); print $2; exit}')
+SCORE=${SCORE:-NA}
 
 # =============================================================================
 # ARCHIVE — result + prompts + this sbatch stored together under one run folder
 # =============================================================================
 
 PRED_CSV="${OUTPUT_BASE}_job${SLURM_JOB_ID}.csv"
-SCORE=NA
 if [ "$SCORE" = "NA" ]; then
   RUN_DIR="${WORKDIR}/data/output/run_no_score_job${SLURM_JOB_ID}"
 else
