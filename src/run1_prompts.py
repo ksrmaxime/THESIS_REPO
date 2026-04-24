@@ -37,7 +37,7 @@ Write one paragraph summarising the criticism. The paragraph must cover who is c
 
 Preserve source and target names, roles, and factual details because they will serve as the basis for later analysis.
 
-Highlight the three elements (SOURCE, TARGET, SUBSTANCE) as cleary as possible in the summary paragraph: exemple "X (SOURCE) criticises Y (TARGET) for Z (SUBSTANCE)."
+Highlight the three elements (SOURCE, TARGET, SUBSTANCE) as cleary as possible in the summary paragraph
 
 --- OUTPUT FORMAT ---
 Respond with EXACTLY these 3 lines and nothing else:
