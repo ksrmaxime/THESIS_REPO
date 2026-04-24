@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name=target_run
+#SBATCH --job-name=thesis_run2
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=48G
 #SBATCH --time=12:00:00
-#SBATCH --output=logs/target_run_%j.out
-#SBATCH --error=logs/target_run_%j.err
+#SBATCH --output=logs/thesis_run2_%j.out
+#SBATCH --error=logs/thesis_run2_%j.err
 #SBATCH --mail-user=maxime.kaiser@unil.ch
 #SBATCH --mail-type=END,FAIL
 
@@ -18,10 +18,10 @@ set -euo pipefail
 
 WORKDIR=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO
 
-# I/O
-INPUT=${WORKDIR}/data/input/target_input.csv
-OUTPUT_BASE=${WORKDIR}/data/output/target
-TEXT_COL=TARGETED_ENTITY_NAME
+# I/O — point INPUT to the run1 output parquet (or csv)
+INPUT=${WORKDIR}/data/output/output_job60427540.parquet
+OUTPUT_BASE=${WORKDIR}/data/output/run2
+TEXT_COL=CRITICISM_SUMMARY
 
 # Subset: number of rows to run (0 = full dataset)
 N_ROWS=0
@@ -32,9 +32,9 @@ DTYPE=bf16
 BACKEND=transformers
 
 # Inference
-BATCH_SIZE=8
-MAX_NEW_TOKENS=32
-MAX_INPUT_TOKENS=512
+BATCH_SIZE=4
+MAX_NEW_TOKENS=256
+MAX_INPUT_TOKENS=2048
 TEMPERATURE=0.0
 
 # =============================================================================
@@ -44,6 +44,8 @@ module load python/3.12.1
 
 cd "$WORKDIR"
 source .venv/bin/activate
+
+export PYTORCH_ALLOC_CONF=expandable_segments:True
 
 mkdir -p logs data/output
 
@@ -79,12 +81,12 @@ python scripts/run2_pipeline.py \
 # =============================================================================
 
 PRED_CSV="${OUTPUT_BASE}_job${SLURM_JOB_ID}.csv"
-RUN_DIR="${WORKDIR}/data/output/run_target_job${SLURM_JOB_ID}"
+RUN_DIR="${WORKDIR}/data/output/run2_job${SLURM_JOB_ID}"
 mkdir -p "$RUN_DIR"
 
-cp "$PRED_CSV"                "$RUN_DIR/results.csv"          || true
-cp "src/run2_prompt.py"       "$RUN_DIR/prompts_used.py"
-cp "$0"                       "$RUN_DIR/sbatch_used.sbatch"
+cp "$PRED_CSV"              "$RUN_DIR/results.csv"          || true
+cp "src/run2_prompts.py"    "$RUN_DIR/prompts_used.py"      || true
+cp "$0"                     "$RUN_DIR/sbatch_used.sbatch"   || true
 
 echo "=== ARCHIVED ==="
 echo "Run folder : $RUN_DIR"

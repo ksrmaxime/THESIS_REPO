@@ -5,33 +5,51 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
 import os
+import re
 import argparse
 import pandas as pd
 
 from src.client import TransformersClient, LLMConfig
 from src.runner import run_llm_dataframe, RunConfig
-from src.run2_prompt import SYSTEM_PROMPT, build_user_prompt
+from src.run2_prompts import SYSTEM_PROMPT, build_user_prompt
 from src.run2_config import build_mask, OUTPUT_COLS
 
 
 def parse_output(raw: str) -> dict:
-    """Extract the single cleaned entity value from the LLM response."""
-    empty = {"CLEANED_TARGET": pd.NA}
+    """Parse the 3-line LLM response into SOURCE, TARGET, REASON."""
+    empty = {col: pd.NA for col in OUTPUT_COLS}
     if not raw:
         return empty
-    value = str(raw).strip().splitlines()[0].strip()
-    return {"CLEANED_TARGET": value if value else pd.NA}
+
+    s = str(raw)
+
+    def _extract(pattern: str) -> str | None:
+        m = re.search(pattern, s, flags=re.IGNORECASE | re.MULTILINE)
+        val = m.group(1).strip() if m else None
+        return None if not val or val.upper() in ("N/A", "NA") else val
+
+    source = _extract(r"SOURCE:\s*(.+)")
+    target = _extract(r"TARGET:\s*(.+)")
+    reason = _extract(r"REASON:\s*(.+)")
+
+    if source is None and target is None and reason is None:
+        return empty
+
+    return {
+        "SOURCE": source,
+        "TARGET": target,
+        "REASON": reason,
+    }
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
 
     # --- I/O ---
-    ap.add_argument("--input",        required=True, help="Path to input .parquet or .csv")
-    ap.add_argument("--output_base",  required=True, help="Base path for outputs (no extension)")
-    ap.add_argument("--text_col",     required=True, help="Column containing the entity mention")
-    ap.add_argument("--n_rows",       type=int, default=0,
-                    help="Number of rows to run (0 = full dataset)")
+    ap.add_argument("--input",        required=True)
+    ap.add_argument("--output_base",  required=True)
+    ap.add_argument("--text_col",     default="CRITICISM_SUMMARY")
+    ap.add_argument("--n_rows",       type=int, default=0)
 
     # --- Model ---
     ap.add_argument("--model_path",        required=True)
@@ -50,19 +68,16 @@ def main() -> int:
 
     args = ap.parse_args()
 
-    # --- Load ---
     df = pd.read_parquet(args.input) if args.input.endswith(".parquet") else pd.read_csv(args.input)
 
     if args.n_rows > 0:
         df = df.head(args.n_rows).copy()
         print(f"[n_rows] Subsetting to first {args.n_rows} rows")
 
-    # --- Prepare output columns ---
     for col in OUTPUT_COLS:
         if col not in df.columns:
             df[col] = pd.Series(pd.NA, index=df.index, dtype="string")
 
-    # --- Init client ---
     client = TransformersClient(
         LLMConfig(
             model_path=args.model_path,
@@ -92,10 +107,9 @@ def main() -> int:
         build_prompt_fn=lambda row, col: build_user_prompt(row, col),
         parse_fn=parse_output,
         output_cols=OUTPUT_COLS,
-        skip_if_already_filled=OUTPUT_COLS[0],  # resume on CLEANED_TARGET
+        skip_if_already_filled=OUTPUT_COLS[0],  # resume on SOURCE
     )
 
-    # --- Save ---
     job_id       = os.environ.get("SLURM_JOB_ID") or args.job_id or "nojobid"
     base         = f"{args.output_base}_job{job_id}"
     parquet_path = base + ".parquet"

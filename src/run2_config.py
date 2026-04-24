@@ -1,19 +1,18 @@
-# src/config_prompt.py
-#
-# Task-level configuration for the target-entity cleaning pipeline.
-# Infrastructure (model path, I/O paths, batch params) lives in target.sbatch.
+# src/run2_config.py
 from __future__ import annotations
 import pandas as pd
 
 # ---------------------------------------------------------------------------
-# Output columns
+# Output columns — SOURCE is used as the resumability key
 # ---------------------------------------------------------------------------
 OUTPUT_COLS = [
-    "CLEANED_TARGET",  # string — cleaned entity name or "other"
+    "SOURCE",   # string — entity label(s), pipe-separated
+    "TARGET",   # string — entity label(s), pipe-separated
+    "REASON",   # string — one sentence
 ]
 
 # ---------------------------------------------------------------------------
-# Row selection mask — only rows where TARGETED_ENTITY_NAME is non-empty
+# Row selection mask — only rows with a non-empty CRITICISM_SUMMARY
 # ---------------------------------------------------------------------------
 def build_mask(df: pd.DataFrame, *, text_col: str) -> pd.Series:
     """Return a boolean Series selecting rows to send to the LLM."""
