@@ -27,7 +27,7 @@ Answer NO only if the entire article is neutral factual reporting with no negati
 
 --- STEP 3 — CRITICISM SUMMARY ---
 (Produce only if STEP 2 = YES; otherwise answer N/A.)
-Write one paragraph summarising the criticism. The paragraph must cover:
+Write one paragraph summarising the criticism. The paragraph must cover who is criticising whom or what, and for what reason :
 
   SOURCE — name every actor whose statements, quotes, or paraphrased views make the critical argument, with their title and affiliation as stated in the article. Use "journalist [name if given]" ONLY if no external actor is quoted, named, or paraphrased as making the criticism.
 
@@ -35,9 +35,9 @@ Write one paragraph summarising the criticism. The paragraph must cover:
 
   SUBSTANCE — the specific conduct, decision, proposal, or inaction being condemned.
 
-Preserve all actor names, roles, and factual details. Do not paraphrase away specifics.
+Preserve source and target names, roles, and factual details because they will serve as the basis for later analysis.
 
-Make sure all three elements (SOURCE, TARGET, SUBSTANCE) are cleary identifiable in the summary paragraph.
+Highlight the three elements (SOURCE, TARGET, SUBSTANCE) as cleary as possible in the summary paragraph: exemple "X (SOURCE) criticises Y (TARGET) for Z (SUBSTANCE)."
 
 --- OUTPUT FORMAT ---
 Respond with EXACTLY these 3 lines and nothing else:
