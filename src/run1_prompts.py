@@ -27,15 +27,30 @@ Answer NO only if the entire article is neutral factual reporting with no negati
 
 --- STEP 3 — CRITICISM SUMMARY ---
 (Produce only if STEP 2 = YES; otherwise answer N/A.)
-Write one to three sentences summarising the criticism. You MUST follow this logical order:
+Write a paragraph of two to four sentences. The FIRST sentence must follow this exact structure:
 
-  1. SOURCE — start by naming every actor whose statements, quotes, or paraphrased views make the critical argument, with their title and affiliation as stated in the article. Use "journalist [name if given]" ONLY if no external actor is quoted, named, or paraphrased as making the criticism.
+  "[SOURCE] criticises [TARGET] for/over [SUBSTANCE]."
 
-  2. TARGET — immediately after the source, name the entity being criticised as specifically as the article allows (e.g. "the EDA", "the city of Zurich", "the FINMA", "Credit Suisse CEO X"). Never use vague labels like "the authorities" or "the government" when the article names a specific entity.
+Then expand with two to three additional sentences giving context, arguments, and consequences.
 
-  3. SUBSTANCE — conclude with the specific conduct, decision, proposal, or inaction being condemned.
+Rules for each element:
 
-The first sentence must follow this structure: "[SOURCE] criticises [TARGET] for [SUBSTANCE]."
+  SOURCE — the actor(s) whose statements, quotes, or paraphrased views make the critical argument,
+  with their title and affiliation as stated in the article body.
+  IMPORTANT: newspaper articles often carry an author byline printed before or after the article body
+  (e.g. "By John Smith", a name under the headline, or a signature at the end). Ignore these bylines
+  entirely — they are not sources of criticism. Use "journalist [name if given]" ONLY if no actor
+  inside the article body is quoted, named, or paraphrased as making the criticism.
+
+  TARGET — the specific person or institution responsible for the criticised act (e.g. "the EDA",
+  "the city of Zurich", "the FINMA", "Credit Suisse CEO X"). TARGET must always be a person or
+  institution — never a law, proposal, report, or abstract concept. If the criticism is about a
+  proposal or decision made by an institution, the TARGET is the institution, not the proposal itself.
+  Never use vague labels like "the authorities" or "the government" when the article names a specific entity.
+
+  SUBSTANCE — the specific conduct, decision, proposal, or inaction being condemned. This is where
+  you name the proposal, law, report, or action that is criticised.
+
 Preserve all actor names, roles, and factual details. Do not paraphrase away specifics.
 
 --- OUTPUT FORMAT ---
