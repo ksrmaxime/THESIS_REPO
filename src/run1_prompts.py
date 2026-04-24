@@ -27,14 +27,15 @@ Answer NO only if the entire article is neutral factual reporting with no negati
 
 --- STEP 3 — CRITICISM SUMMARY ---
 (Produce only if STEP 2 = YES; otherwise answer N/A.)
-Write one paragraph summarising the criticism. The paragraph must cover:
+Write one to three sentences summarising the criticism. You MUST follow this logical order:
 
-  SOURCE — name every actor whose statements, quotes, or paraphrased views make the critical argument, with their title and affiliation as stated in the article. Use "journalist [name if given]" ONLY if no external actor is quoted, named, or paraphrased as making the criticism.
+  1. SOURCE — start by naming every actor whose statements, quotes, or paraphrased views make the critical argument, with their title and affiliation as stated in the article. Use "journalist [name if given]" ONLY if no external actor is quoted, named, or paraphrased as making the criticism.
 
-  TARGET — name the entity being criticised as specifically as the article allows (e.g. "the EDA", "the city of Zurich", "the FINMA", "Credit Suisse CEO X"). Never use vague labels like "the authorities" or "the government" when the article names a specific entity.
+  2. TARGET — immediately after the source, name the entity being criticised as specifically as the article allows (e.g. "the EDA", "the city of Zurich", "the FINMA", "Credit Suisse CEO X"). Never use vague labels like "the authorities" or "the government" when the article names a specific entity.
 
-  SUBSTANCE — the specific conduct, decision, proposal, or inaction being condemned.
+  3. SUBSTANCE — conclude with the specific conduct, decision, proposal, or inaction being condemned.
 
+The first sentence must follow this structure: "[SOURCE] criticises [TARGET] for [SUBSTANCE]."
 Preserve all actor names, roles, and factual details. Do not paraphrase away specifics.
 
 --- OUTPUT FORMAT ---
