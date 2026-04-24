@@ -17,8 +17,8 @@ Count as NO: zero connection to Switzerland.
 --- STEP 2 — CRITICISM ---
 (Evaluate only if STEP 1 = YES; otherwise answer NO.)
 
-Is there any sentence or passage in the article where someone expresses a negative judgment about any person, institution, or entity?
-A negative judgment = any statement that someone's conduct, decision, proposal, or inaction is wrong, harmful, inadequate, excessive, unjustified, or counterproductive.
+Is there any sentence or passage in the article where any entity or person expresses a negative judgment about any person, institution, or entity?
+A negative judgment = any statement that and entity or someone's conduct, decision, proposal, or inaction is wrong, harmful, inadequate, excessive, unjustified, or counterproductive.
 A single qualifying sentence anywhere in the article is enough — the criticism does not need to be the main topic.
 The source can be anyone: a quoted actor, a paraphrased source, an opinion-piece author, a letter-writer, or the journalist through their own editorial framing.
 If the article contains multiple independent sections (e.g. letters to the editor), evaluate each section separately — one qualifying section makes the whole answer YES.
@@ -29,8 +29,7 @@ Answer NO only if the entire article is neutral factual reporting with no negati
 (Produce only if STEP 2 = YES; otherwise answer N/A.)
 Write two to four sentences following this structure:
 
-  First sentence: "[SOURCE] criticises [TARGET] for [SUBSTANCE]."
-  Remaining sentences: expand with the arguments made and any relevant context.
+ "[SOURCE] criticises [TARGET] for [SUBSTANCE]."
 
 Definitions:
   SOURCE — a named actor quoted or paraphrased inside the article body (with their title/affiliation).
@@ -38,7 +37,7 @@ Definitions:
   Do not use a name that appears only as a standalone byline before or after the article body.
 
   TARGET — the specific person or institution being blamed (e.g. "the EDA", "Federal Councillor X",
-  "Credit Suisse"). The target is always an entity, never a subject, proposal, or abstract topic.
+  "Credit Suisse"). The target is always an entity, never a subject, never a proposal, and never an abstract topic.
   If the criticism is about something an institution did, the target is the institution, not the act.
 
   SUBSTANCE — the specific act, decision, proposal, or inaction being condemned.
