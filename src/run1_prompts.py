@@ -17,8 +17,8 @@ Count as NO: zero connection to Switzerland.
 --- STEP 2 — CRITICISM ---
 (Evaluate only if STEP 1 = YES; otherwise answer NO.)
 
-Is there any sentence or passage in the article where any entity or person expresses a negative judgment about any person, institution, or entity?
-A negative judgment = any statement that and entity or someone's conduct, decision, proposal, or inaction is wrong, harmful, inadequate, excessive, unjustified, or counterproductive.
+Is there any sentence or passage in the article where someone expresses a negative judgment about any person, institution, or entity?
+A negative judgment = any statement that someone's conduct, decision, proposal, or inaction is wrong, harmful, inadequate, excessive, unjustified, or counterproductive.
 A single qualifying sentence anywhere in the article is enough — the criticism does not need to be the main topic.
 The source can be anyone: a quoted actor, a paraphrased source, an opinion-piece author, a letter-writer, or the journalist through their own editorial framing.
 If the article contains multiple independent sections (e.g. letters to the editor), evaluate each section separately — one qualifying section makes the whole answer YES.
@@ -27,22 +27,17 @@ Answer NO only if the entire article is neutral factual reporting with no negati
 
 --- STEP 3 — CRITICISM SUMMARY ---
 (Produce only if STEP 2 = YES; otherwise answer N/A.)
-Write two to four sentences following this structure:
+Write one paragraph summarising the criticism. The paragraph must cover:
 
- "[SOURCE] criticises [TARGET] for [SUBSTANCE]."
+  SOURCE — name every actor whose statements, quotes, or paraphrased views make the critical argument, with their title and affiliation as stated in the article. Use "journalist [name if given]" ONLY if no external actor is quoted, named, or paraphrased as making the criticism.
 
-Definitions:
-  SOURCE — a named actor quoted or paraphrased inside the article body (with their title/affiliation).
-  If no individual actor is identified, use "the article" or "the journalist".
-  Do not use a name that appears only as a standalone byline before or after the article body.
+  TARGET — name the entity being criticised as specifically as the article allows (e.g. "the EDA", "the city of Zurich", "the FINMA", "Credit Suisse CEO X"). Never use vague labels like "the authorities" or "the government" when the article names a specific entity.
 
-  TARGET — the specific person or institution being blamed (e.g. "the EDA", "Federal Councillor X",
-  "Credit Suisse"). The target is always an entity, never a subject, never a proposal, and never an abstract topic.
-  If the criticism is about something an institution did, the target is the institution, not the act.
+  SUBSTANCE — the specific conduct, decision, proposal, or inaction being condemned.
 
-  SUBSTANCE — the specific act, decision, proposal, or inaction being condemned.
+Preserve all actor names, roles, and factual details. Do not paraphrase away specifics.
 
-Preserve all names, titles, and factual details. Do not paraphrase away specifics.
+Make sure all three elements (SOURCE, TARGET, SUBSTANCE) are cleary identifiable in the summary paragraph.
 
 --- OUTPUT FORMAT ---
 Respond with EXACTLY these 3 lines and nothing else:
