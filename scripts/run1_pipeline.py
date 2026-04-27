@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
+import math
 import os
 import re
 import argparse
@@ -75,14 +76,44 @@ def main() -> int:
 
     # --- Internal ---
     ap.add_argument("--job_id", default=None)
+    ap.add_argument("--task_id",   type=int, default=None,
+                    help="Array task index (0-indexed). If omitted, read from SLURM_ARRAY_TASK_ID.")
+    ap.add_argument("--num_tasks", type=int, default=None,
+                    help="Total number of array tasks. If omitted, read from SLURM_ARRAY_TASK_COUNT.")
 
     args = ap.parse_args()
 
-    df = pd.read_parquet(args.input) if args.input.endswith(".parquet") else pd.read_csv(args.input)
+    task_id = args.task_id
+    if task_id is None and os.environ.get("SLURM_ARRAY_TASK_ID"):
+        task_id = int(os.environ["SLURM_ARRAY_TASK_ID"])
 
-    if args.n_rows > 0:
-        df = df.head(args.n_rows).copy()
-        print(f"[n_rows] Subsetting to first {args.n_rows} rows")
+    num_tasks = args.num_tasks
+    if num_tasks is None and os.environ.get("SLURM_ARRAY_TASK_COUNT"):
+        num_tasks = int(os.environ["SLURM_ARRAY_TASK_COUNT"])
+
+    # Checkpoint path is task-scoped (no job_id) so it survives re-submissions
+    checkpoint_path = None
+    if task_id is not None:
+        ckpt_suffix = f"_task{task_id}_checkpoint.parquet"
+        checkpoint_path = args.output_base + ckpt_suffix
+
+    # Resume from checkpoint if it exists, otherwise load input and slice
+    if checkpoint_path and Path(checkpoint_path).exists():
+        print(f"[resume] Loading checkpoint: {checkpoint_path}", flush=True)
+        df = pd.read_parquet(checkpoint_path)
+    else:
+        df = pd.read_parquet(args.input) if args.input.endswith(".parquet") else pd.read_csv(args.input)
+
+        if args.n_rows > 0:
+            df = df.head(args.n_rows).copy()
+            print(f"[n_rows] Subsetting to first {args.n_rows} rows")
+
+        if task_id is not None and num_tasks is not None:
+            chunk_size = math.ceil(len(df) / num_tasks)
+            start = task_id * chunk_size
+            end   = min(start + chunk_size, len(df))
+            print(f"[pipeline] Array task {task_id}/{num_tasks} — rows {start}:{end} ({end - start} rows)", flush=True)
+            df = df.iloc[start:end].copy()
 
     for col in OUTPUT_COLS:
         if col not in df.columns:
@@ -118,10 +149,18 @@ def main() -> int:
         parse_fn=parse_output,
         output_cols=OUTPUT_COLS,
         skip_if_already_filled=OUTPUT_COLS[0],  # resume on SWISS_CONTEXT
+        checkpoint_path=checkpoint_path,
+        checkpoint_every=50,  # save every 50 batches = 100 rows at batch_size=2
     )
 
-    job_id       = os.environ.get("SLURM_JOB_ID") or args.job_id or "nojobid"
-    base         = f"{args.output_base}_job{job_id}"
+    job_id = (os.environ.get("SLURM_ARRAY_JOB_ID")
+              or os.environ.get("SLURM_JOB_ID")
+              or args.job_id
+              or "nojobid")
+    if task_id is not None:
+        base = f"{args.output_base}_task{task_id}_job{job_id}"
+    else:
+        base = f"{args.output_base}_job{job_id}"
     parquet_path = base + ".parquet"
     csv_path     = base + ".csv"
 
@@ -130,6 +169,11 @@ def main() -> int:
     out.to_csv(csv_path, index=False)
 
     print(f"Saved: {parquet_path} | Processed: {int(mask.sum()):,} rows")
+
+    if checkpoint_path and Path(checkpoint_path).exists():
+        Path(checkpoint_path).unlink()
+        print(f"[checkpoint] Deleted {checkpoint_path}")
+
     return 0
 
 

@@ -33,6 +33,8 @@ def run_llm_dataframe(
     parse_fn: Callable[[str], Dict[str, object]],
     output_cols: List[str],
     skip_if_already_filled: Optional[str] = None,
+    checkpoint_path: Optional[str] = None,
+    checkpoint_every: int = 50,
 ) -> pd.DataFrame:
     """
     Generic LLM batch runner over a DataFrame.
@@ -42,6 +44,8 @@ def run_llm_dataframe(
     - parse_fn(raw)              -> dict {output_col: value, ...}
     - output_cols                -> columns guaranteed to exist in output df
     - skip_if_already_filled     -> skip rows where df[col] is not NA (resumable runs)
+    - checkpoint_path            -> path to save partial results every checkpoint_every batches
+    - checkpoint_every           -> save checkpoint every N batches (default 50)
     """
     df = df.copy()
     df = ensure_columns(df, output_cols)
@@ -58,7 +62,7 @@ def run_llm_dataframe(
     if not idx:
         return df
 
-    for start in range(0, len(idx), int(cfg.batch_size)):
+    for batch_num, start in enumerate(range(0, len(idx), int(cfg.batch_size))):
         batch_idx = idx[start:start + int(cfg.batch_size)]
         batch_rows = df.loc[batch_idx]
 
@@ -76,5 +80,10 @@ def run_llm_dataframe(
             for k, v in parsed.items():
                 if k in df.columns:
                     df.at[row_id, k] = v
+
+        if checkpoint_path and (batch_num + 1) % checkpoint_every == 0:
+            df.to_parquet(checkpoint_path, index=False)
+            filled = int(df[skip_if_already_filled].notna().sum()) if skip_if_already_filled else "?"
+            print(f"[checkpoint] batch {batch_num + 1} — {filled}/{len(df)} rows done → {checkpoint_path}", flush=True)
 
     return df
