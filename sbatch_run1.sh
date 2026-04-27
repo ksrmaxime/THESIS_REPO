@@ -25,7 +25,7 @@ TEXT_COL=text
 GOLD_CSV=${WORKDIR}/data/input/THESIS_RUN1_Max_Gold.csv
 
 # Subset: number of rows to run (0 = full dataset)
-N_ROWS=300
+N_ROWS=0
 
 # Model
 MODEL_PATH=/reference/LLM/swiss-ai/Apertus-8B-Instruct-2509
@@ -68,7 +68,6 @@ python scripts/run1_pipeline.py \
   --input             "$INPUT" \
   --output_base       "$OUTPUT_BASE" \
   --text_col          "$TEXT_COL" \
-  --n_rows            "300" \
   --model_path        "$MODEL_PATH" \
   --dtype             "$DTYPE" \
   --backend           "$BACKEND" \
