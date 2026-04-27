@@ -34,7 +34,6 @@ if [ -z "$ARRAY_JOB_ID" ]; then
     exit 1
 fi
 
-GOLD_CSV=${WORKDIR}/data/input/THESIS_RUN1_Max_Gold.csv
 OUTDIR="${WORKDIR}/data/output"
 OUTBASE="${OUTDIR}/run1"
 MERGED_PARQUET="${OUTDIR}/run1_merged_job${ARRAY_JOB_ID}.parquet"
