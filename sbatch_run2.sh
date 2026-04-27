@@ -19,7 +19,7 @@ set -euo pipefail
 WORKDIR=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO
 
 # I/O — point INPUT to the run1 output parquet (or csv)
-INPUT=${WORKDIR}/data/output/run_84p42_job60450975/results.csv
+INPUT=${WORKDIR}/data/output/run_83p51_job60427540/results.csv
 OUTPUT_BASE=${WORKDIR}/data/output/run2
 TEXT_COL=CRITICISM_SUMMARY
 
