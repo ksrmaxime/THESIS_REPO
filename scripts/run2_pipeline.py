@@ -16,7 +16,7 @@ from src.run2_config import build_mask, OUTPUT_COLS
 
 
 def parse_output(raw: str) -> dict:
-    """Parse the 3-line LLM response into SOURCE, TARGET, REASON."""
+    """Parse the 3-line LLM response into SOURCE, TARGET, WHAT."""
     empty = {col: pd.NA for col in OUTPUT_COLS}
     if not raw:
         return empty
@@ -30,15 +30,15 @@ def parse_output(raw: str) -> dict:
 
     source = _extract(r"SOURCE:\s*(.+)")
     target = _extract(r"TARGET:\s*(.+)")
-    reason = _extract(r"REASON:\s*(.+)")
+    what   = _extract(r"WHAT:\s*(.+)")
 
-    if source is None and target is None and reason is None:
+    if source is None and target is None and what is None:
         return empty
 
     return {
         "SOURCE": source,
         "TARGET": target,
-        "REASON": reason,
+        "WHAT":   what,
     }
 
 

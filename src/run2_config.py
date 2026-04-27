@@ -6,9 +6,9 @@ import pandas as pd
 # Output columns — SOURCE is used as the resumability key
 # ---------------------------------------------------------------------------
 OUTPUT_COLS = [
-    "SOURCE",   # string — entity label(s), pipe-separated
-    "TARGET",   # string — entity label(s), pipe-separated
-    "REASON",   # string — one sentence
+    "SOURCE",   # string — category — name/details, pipe-separated
+    "TARGET",   # string — category — name/details, pipe-separated
+    "WHAT",     # string — "Past Action" | "Future Proposal"
 ]
 
 # ---------------------------------------------------------------------------

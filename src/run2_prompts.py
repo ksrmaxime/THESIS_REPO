@@ -20,12 +20,8 @@ Pick the SINGLE best-matching category per source entity.
 Append " — [name/details]" after the category when a name or affiliation is given.
 Separate multiple distinct sources with " | ".
 
-  Journalist          → no individual named, or the speaker is clearly a journalist
-  General Public      → a named individual with no stated title or current affiliation
-  Interest Group      → a named company, trade union, NGO, association, or advocacy group (or someone representing any of them)
-  Civil Servant       → a named individual employed in a public administration (non-elected)
-  Parliamentary       → an elected member of parliament; append name and party abbreviation
-                        Valid parties: SVP/UDC | SP/PS | FDP/PLR | Die Mitte/Le Centre | Die Grünen/Les Verts | GLP/PVL
+Apply the categories in this strict order of priority:
+
   Federal Councillor  → a member of the Swiss federal government; append name and department
                         DFAE/EDA   — Ignazio Cassis
                         DFI/EDI    — Elisabeth Baume-Schneider
@@ -35,6 +31,20 @@ Separate multiple distinct sources with " | ".
                         DEFR/WBF   — Guy Parmelin
                         DETEC/UVEK — Albert Rösti
   Department          → use ONLY when a Federal Councillor is NOT named; append department abbreviation
+  Parliamentary       → an elected member of parliament; append name and party abbreviation
+                        Valid parties: SVP/UDC | SP/PS | FDP/PLR | Die Mitte/Le Centre | Die Grünen/Les Verts | GLP/PVL
+  Civil Servant       → person whose role is to work FOR the state in a public administration
+                        (fonctionnaire, public official, non-elected employee of any administration)
+                        Even if only their name is given, use this if their state role is mentioned.
+  Interest Group      → person or entity that represents an EXTERNAL actor vis-à-vis the state:
+                        companies, trade unions, NGOs, lobbies, professional associations,
+                        employers' federations, consumer groups, etc.
+                        Also use when a named individual is identified by their role in such an organisation.
+  Journalist          → use when NO individual name is given, OR when the text itself formulates
+                        the criticism directly (e.g. "the article argues…", "the paper criticises…",
+                        "the journalist writes…"), OR when the critic is identified only as a journalist.
+  General Public      → use ONLY when a name is given with absolutely no title, role, or affiliation.
+                        This is the residual category — exhaust all others first.
 
 ──────────────────────────────────────────────────────────────────────────────
 TARGET — who is being blamed?
@@ -103,7 +113,7 @@ Do not add any explanation, preamble, or extra line.\
 # User prompt template
 # ---------------------------------------------------------------------------
 USER_TEMPLATE = """\
-Extract the SOURCE, TARGET, WHAT, and REASON from the following criticism summary.
+Extract the SOURCE, TARGET, and WHAT from the following criticism summary.
 
 Summary:
 {text}
