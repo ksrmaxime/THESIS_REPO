@@ -11,7 +11,7 @@ import pandas as pd
 
 from src.client import TransformersClient, LLMConfig
 from src.runner import run_llm_dataframe, RunConfig
-from src.run2_prompts import SYSTEM_PROMPT, build_user_prompt
+from src.run2_prompts import build_system_prompt, get_composition_idx, build_user_prompt
 from src.run2_config import build_mask, OUTPUT_COLS
 
 
@@ -96,19 +96,39 @@ def main() -> int:
         max_input_tokens=args.max_input_tokens,
     )
 
+    PUBTIME_COL = "pubtime"
     mask = build_mask(df, text_col=args.text_col)
 
-    out = run_llm_dataframe(
-        df=df,
-        cfg=run_cfg,
-        client=client,
-        system_prompt=SYSTEM_PROMPT,
-        select_mask_fn=lambda df_: mask,
-        build_prompt_fn=lambda row, col: build_user_prompt(row, col),
-        parse_fn=parse_output,
-        output_cols=OUTPUT_COLS,
-        skip_if_already_filled=OUTPUT_COLS[0],  # resume on SOURCE
-    )
+    # Assign each row its council composition index so batches share the same
+    # system prompt (required because runner.py takes a single system_prompt).
+    if PUBTIME_COL in df.columns:
+        df["_comp_idx"] = df[PUBTIME_COL].apply(get_composition_idx)
+    else:
+        print(f"[warn] column '{PUBTIME_COL}' not found — using latest council composition")
+        df["_comp_idx"] = get_composition_idx(None)  # falls back to latest composition
+
+    out = df.copy()
+    for comp_idx in sorted(df["_comp_idx"].unique()):
+        group_mask = mask & (df["_comp_idx"] == comp_idx)
+        if not group_mask.any():
+            continue
+
+        sample_pubtime = df.loc[group_mask, PUBTIME_COL].iloc[0] if PUBTIME_COL in df.columns else None
+        system_prompt = build_system_prompt(sample_pubtime)
+
+        out = run_llm_dataframe(
+            df=out,
+            cfg=run_cfg,
+            client=client,
+            system_prompt=system_prompt,
+            select_mask_fn=lambda df_, gm=group_mask: gm,
+            build_prompt_fn=lambda row, col: build_user_prompt(row, col),
+            parse_fn=parse_output,
+            output_cols=OUTPUT_COLS,
+            skip_if_already_filled=OUTPUT_COLS[0],  # resume on SOURCE
+        )
+
+    out = out.drop(columns=["_comp_idx"])
 
     job_id       = os.environ.get("SLURM_JOB_ID") or args.job_id or "nojobid"
     base         = f"{args.output_base}_job{job_id}"
