@@ -545,51 +545,111 @@ def fig_party_vs_target(df_full: pd.DataFrame, fig_dir: Path, tbl_dir: Path) -> 
             matrix_fdcf_pct = matrix_fdcf_pct.sort_values("Person (CF)")
             matrix_fdcf     = matrix_fdcf.loc[matrix_fdcf_pct.index]
 
-    fig, axes = plt.subplots(3, 2, figsize=(20, max(12, len(matrix_cat) * 1.2 + 6)))
+    # ── Sub-fig D: dept × party, split FD vs CF attacks ─────────────────────
+    # For each department, show how many attacks came from each party
+    # and whether they targeted the department (FD) or its councillor (CF).
+    tmp["dept"]  = tmp["target_raw"].map(_to_dept_label)
+    tmp["fd_cf"] = tmp["target_raw"].map(_fd_or_cf)
+    sub_split = tmp.dropna(subset=["dept", "fd_cf"])
+    if not sub_split.empty:
+        # FD attacks: source=party, target=dept (via FD entry)
+        fd_rows = sub_split[sub_split["fd_cf"] == "Department (FD)"]
+        matrix_dept_fd = (fd_rows.groupby(["dept", "party"]).size()
+                          .unstack(fill_value=0) if not fd_rows.empty
+                          else pd.DataFrame())
+        # CF attacks: source=party, target=dept (via CF entry, dept extracted)
+        cf_rows = sub_split[sub_split["fd_cf"] == "Person (CF)"]
+        matrix_dept_cf = (cf_rows.groupby(["dept", "party"]).size()
+                          .unstack(fill_value=0) if not cf_rows.empty
+                          else pd.DataFrame())
+        # Align columns across both matrices
+        all_parties = sorted(
+            set(matrix_dept_fd.columns.tolist() + matrix_dept_cf.columns.tolist()))
+        all_depts = sorted(
+            set(matrix_dept_fd.index.tolist() + matrix_dept_cf.index.tolist()))
+        for m in [matrix_dept_fd, matrix_dept_cf]:
+            for p in all_parties:
+                if p not in m.columns:
+                    m[p] = 0
+            for d in all_depts:
+                if d not in m.index:
+                    m.loc[d] = 0
+        matrix_dept_fd = matrix_dept_fd.reindex(index=all_depts, columns=all_parties, fill_value=0)
+        matrix_dept_cf = matrix_dept_cf.reindex(index=all_depts, columns=all_parties, fill_value=0)
 
+    # ── Sub-fig E: councillor × party ────────────────────────────────────────
+    tmp["cf_name"] = tmp["target_raw"].apply(
+        lambda v: _cf_name(v) if str(v).startswith("CF (") else None)
+    sub_cf = tmp.dropna(subset=["cf_name"])
+    matrix_cf_party = (sub_cf.groupby(["cf_name", "party"]).size()
+                       .unstack(fill_value=0) if not sub_cf.empty
+                       else pd.DataFrame())
+
+    # ── Build figure (5 rows × 2 cols) ───────────────────────────────────────
+    fig, axes = plt.subplots(5, 2, figsize=(22, max(20, len(matrix_cat) * 1.2 + 16)))
+
+    # Row 0 — party × target category
     _draw_heatmap(axes[0][0], matrix_cat,     "{:.0f}",  cmap)
     axes[0][0].set_title("Party × Target category  (counts)")
-    axes[0][0].set_xlabel("Target")
-    axes[0][0].set_ylabel("Party")
-
+    axes[0][0].set_xlabel("Target"); axes[0][0].set_ylabel("Party")
     _draw_heatmap(axes[0][1], matrix_cat_pct, "{:.0f}%", cmap)
     axes[0][1].set_title("Party × Target category  (% of party's criticisms)")
     axes[0][1].set_xlabel("Target")
 
+    # Row 1 — party × department (all attacks merged)
     if not matrix_dept.empty:
         _draw_heatmap(axes[1][0], matrix_dept,     "{:.0f}",  cmap)
-        axes[1][0].set_title("Party × Department targeted  (counts)")
-        axes[1][0].set_xlabel("Department")
-        axes[1][0].set_ylabel("Party")
-
+        axes[1][0].set_title("Party × Department targeted  (counts, FD+CF merged)")
+        axes[1][0].set_xlabel("Department"); axes[1][0].set_ylabel("Party")
         _draw_heatmap(axes[1][1], matrix_dept_pct, "{:.0f}%", cmap)
         axes[1][1].set_title("Party × Department targeted  (% of party's criticisms)")
         axes[1][1].set_xlabel("Department")
     else:
-        axes[1][0].axis("off")
-        axes[1][1].axis("off")
+        axes[1][0].axis("off"); axes[1][1].axis("off")
 
+    # Row 2 — party FD/CF preference
     if not sub_fdcf.empty:
         colors = [BLUE, RED]
-        matrix_fdcf.plot(kind="barh", ax=axes[2][0],
-                         color=colors, stacked=False)
-        axes[2][0].set_title("Department vs Person — by party  (raw counts)")
-        axes[2][0].set_xlabel("Count")
-        axes[2][0].set_ylabel("Party")
+        matrix_fdcf.plot(kind="barh", ax=axes[2][0], color=colors, stacked=False)
+        axes[2][0].set_title("Department vs Person — by party  (counts)")
+        axes[2][0].set_xlabel("Count"); axes[2][0].set_ylabel("Party")
         axes[2][0].legend(fontsize=8)
-
-        matrix_fdcf_pct.plot(kind="barh", ax=axes[2][1],
-                              color=colors, stacked=True)
+        matrix_fdcf_pct.plot(kind="barh", ax=axes[2][1], color=colors, stacked=True)
         axes[2][1].set_title("Department vs Person — by party  (% stacked)")
-        axes[2][1].set_xlabel("% of criticisms targeting federal executive")
+        axes[2][1].set_xlabel("% targeting federal executive")
         axes[2][1].xaxis.set_major_formatter(
             mticker.FuncFormatter(lambda x, _: f"{x:.0f}%"))
         axes[2][1].legend(fontsize=8)
-        for label in axes[2][1].get_yticklabels():
-            label.set_fontsize(8)
+        for lbl in axes[2][1].get_yticklabels():
+            lbl.set_fontsize(8)
     else:
-        axes[2][0].axis("off")
-        axes[2][1].axis("off")
+        axes[2][0].axis("off"); axes[2][1].axis("off")
+
+    # Row 3 — dept × party split: FD attacks (left) and CF attacks (right)
+    if not sub_split.empty and not matrix_dept_fd.empty:
+        _draw_heatmap(axes[3][0], matrix_dept_fd, "{:.0f}", cmap)
+        axes[3][0].set_title("Dept × Party — attacks on DEPARTMENT (FD)")
+        axes[3][0].set_xlabel("Party"); axes[3][0].set_ylabel("Department")
+    else:
+        axes[3][0].axis("off")
+    if not sub_split.empty and not matrix_dept_cf.empty:
+        _draw_heatmap(axes[3][1], matrix_dept_cf, "{:.0f}", cmap)
+        axes[3][1].set_title("Dept × Party — attacks on COUNCILLOR (CF)")
+        axes[3][1].set_xlabel("Party"); axes[3][1].set_ylabel("Department")
+    else:
+        axes[3][1].axis("off")
+
+    # Row 4 — councillor × party
+    if not matrix_cf_party.empty:
+        _draw_heatmap(axes[4][0], matrix_cf_party, "{:.0f}", cmap)
+        axes[4][0].set_title("Councillor × Party — attacks on PERSON (CF)")
+        axes[4][0].set_xlabel("Party"); axes[4][0].set_ylabel("Councillor")
+        matrix_cf_pct = matrix_cf_party.div(matrix_cf_party.sum(axis=1), axis=0) * 100
+        _draw_heatmap(axes[4][1], matrix_cf_pct, "{:.0f}%", cmap)
+        axes[4][1].set_title("Councillor × Party  (% of attacks on councillor)")
+        axes[4][1].set_xlabel("Party")
+    else:
+        axes[4][0].axis("off"); axes[4][1].axis("off")
 
     _save(fig, fig_dir / "fig13_party_vs_target.png",
           "Parliamentary Parties — Who Do They Criticise?")
@@ -601,6 +661,13 @@ def fig_party_vs_target(df_full: pd.DataFrame, fig_dir: Path, tbl_dir: Path) -> 
     if not sub_fdcf.empty:
         matrix_fdcf.to_csv(tbl_dir / "party_vs_fd_cf_counts.csv")
         matrix_fdcf_pct.round(1).to_csv(tbl_dir / "party_vs_fd_cf_pct.csv")
+    if not sub_split.empty:
+        if not matrix_dept_fd.empty:
+            matrix_dept_fd.to_csv(tbl_dir / "dept_party_fd_attacks.csv")
+        if not matrix_dept_cf.empty:
+            matrix_dept_cf.to_csv(tbl_dir / "dept_party_cf_attacks.csv")
+    if not matrix_cf_party.empty:
+        matrix_cf_party.to_csv(tbl_dir / "cf_party_attacks.csv")
 
 
 def fig_internal_federal(df_full: pd.DataFrame, fig_dir: Path, tbl_dir: Path) -> None:
@@ -641,8 +708,11 @@ def fig_internal_federal(df_full: pd.DataFrame, fig_dir: Path, tbl_dir: Path) ->
     def _row(ax_counts, ax_pct, matrix, title_counts, title_pct,
              xlabel, ylabel) -> None:
         if matrix.empty:
-            ax_counts.axis("off")
-            ax_pct.axis("off")
+            for ax, title in [(ax_counts, title_counts), (ax_pct, title_pct)]:
+                ax.set_title(title)
+                ax.text(0.5, 0.5, "No data", ha="center", va="center",
+                        transform=ax.transAxes, fontsize=11, color=GRAY)
+                ax.set_xticks([]); ax.set_yticks([])
             return
         _draw_heatmap(ax_counts, matrix,       "{:.0f}",  cmap)
         ax_counts.set_title(title_counts)
