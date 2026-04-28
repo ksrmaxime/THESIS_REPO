@@ -59,6 +59,99 @@ PARTIES: list[str] = [
     "SP/PS",
 ]
 
+# Alias patterns for party names the LLM writes differently.
+# Each entry: (compiled regex, canonical party string).
+# Checked with re.IGNORECASE after the exact PARTIES list fails.
+# Also fires when the LLM drops the "Parliamentary" keyword for later pipe entities.
+PARTY_ALIAS_PATTERNS: list[tuple[re.Pattern, str]] = [
+    (re.compile(r'\bSVP\b'),                   "SVP/UDC"),
+    (re.compile(r'\bUDC\b'),                   "SVP/UDC"),
+    (re.compile(r'\b(?:SP|PS)\b'),             "SP/PS"),
+    (re.compile(r'\bFDP\b'),                   "FDP/PLR"),
+    (re.compile(r'\bPLR\b'),                   "FDP/PLR"),
+    (re.compile(r'\bGLP\b'),                   "GLP/PVL"),
+    (re.compile(r'\bPVL\b'),                   "GLP/PVL"),
+    (re.compile(r'\bGreen Liberals?\b', re.I), "GLP/PVL"),
+    (re.compile(r'\bVerts libéraux\b',  re.I), "GLP/PVL"),
+    (re.compile(r'\bMitte\b',           re.I), "Die Mitte/Le Centre"),
+    (re.compile(r'\bLe Centre\b',       re.I), "Die Mitte/Le Centre"),
+    (re.compile(r'\bCVP\b'),                   "Die Mitte/Le Centre"),
+    (re.compile(r'\bPDC\b'),                   "Die Mitte/Le Centre"),
+    (re.compile(r'\bGrünen?\b',         re.I), "Die Grünen/Les Verts"),
+    (re.compile(r'\bLes Verts\b',       re.I), "Die Grünen/Les Verts"),
+    (re.compile(r'\bGreen Party\b',     re.I), "Die Grünen/Les Verts"),
+    (re.compile(r'\bGreens\b',          re.I), "Die Grünen/Les Verts"),
+]
+
+# Single-language department abbreviation → canonical bilingual form.
+# Covers LLM outputs that omit one side (e.g. "EDI" instead of "DFI/EDI").
+DEPT_SINGLE_MAP: dict[str, str] = {
+    # French halves
+    "DFAE":  "DFAE/EDA",
+    "DFI":   "DFI/EDI",
+    "DFJP":  "DFJP/EJPD",
+    "DDPS":  "DDPS/VBS",
+    "DFF":   "DFF/EFD",
+    "DEFR":  "DEFR/WBF",
+    "DETEC": "DETEC/UVEK",
+    "ChF":   "ChF/BK",
+    # German halves
+    "EDA":   "DFAE/EDA",
+    "EDI":   "DFI/EDI",
+    "EJPD":  "DFJP/EJPD",
+    "VBS":   "DDPS/VBS",
+    "EFD":   "DFF/EFD",
+    "WBF":   "DEFR/WBF",
+    "UVEK":  "DETEC/UVEK",
+    "BK":    "ChF/BK",
+}
+
+# Sub-office / secretariat abbreviation → parent department.
+# Both FR and DE abbreviations map to the same bilingual dept form.
+SUBOFFICE_MAP: dict[str, str] = {
+    # ── DFI/EDI ──────────────────────────────────────────────────────────────
+    "OFSP": "DFI/EDI",  "BAG":  "DFI/EDI",   # Santé publique / Gesundheit
+    "OFAS": "DFI/EDI",  "BSV":  "DFI/EDI",   # Assurances sociales
+    "OFS":  "DFI/EDI",  "BFS":  "DFI/EDI",   # Statistique
+    "OFC":  "DFI/EDI",  "BAK":  "DFI/EDI",   # Culture
+    "OSAV": "DFI/EDI",  "BLV":  "DFI/EDI",   # Sécurité alimentaire / vétérinaire
+    "BFEG": "DFI/EDI",                         # Égalité femmes-hommes
+    "AFS":  "DFI/EDI",  "BAR":  "DFI/EDI",   # Archives fédérales
+    "MétéoSuisse": "DFI/EDI",
+    # ── DFAE/EDA ─────────────────────────────────────────────────────────────
+    "DSH":  "DFAE/EDA",                        # Droit international public
+    "DAS":  "DFAE/EDA",                        # Aide humanitaire
+    # ── DFJP/EJPD ────────────────────────────────────────────────────────────
+    "SEM":    "DFJP/EJPD",                     # Secrétariat d'État aux migrations
+    "fedpol": "DFJP/EJPD",                     # Police fédérale
+    "OFJ":    "DFJP/EJPD", "BJ": "DFJP/EJPD", # Justice
+    "ISDC":   "DFJP/EJPD",                     # Institut droit comparé
+    # ── DDPS/VBS ─────────────────────────────────────────────────────────────
+    "armasuisse": "DDPS/VBS",
+    "swisstopo":  "DDPS/VBS",
+    "OFPP": "DDPS/VBS", "BABS": "DDPS/VBS",   # Protection de la population
+    # ── DFF/EFD ──────────────────────────────────────────────────────────────
+    "AFC":   "DFF/EFD",  "ESTV":  "DFF/EFD",  # Contributions / impôts
+    "AFD":   "DFF/EFD",  "BAZG":  "DFF/EFD",  # Douanes et sécurité des frontières
+    "CDF":   "DFF/EFD",  "EFK":   "DFF/EFD",  # Contrôle des finances
+    "AFF":   "DFF/EFD",  "FFA":   "DFF/EFD",  # Administration des finances
+    "FOITT": "DFF/EFD",  "BIT":   "DFF/EFD",  # Informatique / télécommunications
+    "FOBL":  "DFF/EFD",  "BBL":   "DFF/EFD",  # Construction et logistique
+    # ── DEFR/WBF ─────────────────────────────────────────────────────────────
+    "SECO":  "DEFR/WBF",                       # Secrétariat d'État à l'économie
+    "SBFI":  "DEFR/WBF", "SEFRI": "DEFR/WBF", # Formation, recherche, innovation
+    "SERI":  "DEFR/WBF",
+    "OFAG":  "DEFR/WBF", "BLW":   "DEFR/WBF", # Agriculture
+    # ── DETEC/UVEK ───────────────────────────────────────────────────────────
+    "OFEV":  "DETEC/UVEK", "BAFU":  "DETEC/UVEK", # Environnement
+    "OFT":   "DETEC/UVEK", "BAV":   "DETEC/UVEK", # Transports
+    "OFEN":  "DETEC/UVEK", "BFE":   "DETEC/UVEK", # Énergie
+    "ARE":   "DETEC/UVEK",                          # Développement territorial
+    "OFROU": "DETEC/UVEK", "ASTRA": "DETEC/UVEK",  # Routes
+    "OFAC":  "DETEC/UVEK", "BAZL":  "DETEC/UVEK",  # Aviation civile
+    "OFCOM": "DETEC/UVEK", "BAKOM": "DETEC/UVEK",  # Communications
+}
+
 # Maps lower-case substring → canonical display name
 SIMPLE_CATEGORIES: dict[str, str] = {
     "civil servant":      "Civil Servant",
@@ -73,11 +166,11 @@ SIMPLE_CATEGORIES: dict[str, str] = {
     "state owned company":"State-Owned Company",
 }
 
-# Department abbreviation pattern (e.g. DFAE/EDA, DETEC/UVEK, DEFR/WBF …)
-_DEPT_RE   = re.compile(r'\b(D[A-Z]+/[A-Z]+)\b')
+# Department abbreviation pattern — full bilingual form (e.g. DFAE/EDA, DETEC/UVEK)
+_DEPT_RE  = re.compile(r'\b(D[A-Z]+/[A-Z]+|ChF/BK)\b')
 # Matches "Federal Council" but NOT "Federal Councillor" / "Federal Councilor"
-_FC_RE     = re.compile(r'\bfederal council\b')
-_FCLR_RE   = re.compile(r'\bfederal council(l)?or\b')  # councillor / councilor
+_FC_RE    = re.compile(r'\bfederal council\b')
+_FCLR_RE  = re.compile(r'\bfederal council(l)?or\b')  # councillor / councilor
 
 
 # ---------------------------------------------------------------------------
@@ -99,16 +192,33 @@ def _std_single(token: str, pubtime=None) -> str:
             dept = n2d.get(name) or _LAST_KNOWN_DEPT.get(name, "")
             return f"CF ({name} — {dept})" if dept else f"CF ({name})"
 
-    # 2. Federal Department — incomplete (no dept abbrev found) → Other
+    # 2. Federal Department
     if "department" in tl:
+        # a) Full bilingual pattern: DFAE/EDA, DETEC/UVEK, …
         m = _DEPT_RE.search(token)
-        return f"FD ({m.group(1)})" if m else "Other"
+        if m:
+            return f"FD ({m.group(1)})"
+        # b) Single-language half: EDI → DFI/EDI, VBS → DDPS/VBS, …
+        for abbrev, full in DEPT_SINGLE_MAP.items():
+            if re.search(rf'\b{re.escape(abbrev)}\b', token):
+                return f"FD ({full})"
+        # c) Sub-office / secretariat: OFSP → DFI/EDI, SECO → DEFR/WBF, …
+        for suboffice, dept in SUBOFFICE_MAP.items():
+            if re.search(rf'\b{re.escape(suboffice)}\b', token, re.IGNORECASE):
+                return f"FD ({dept})"
+        return "Other"  # "department" in text but abbreviation unrecognised
 
-    # 3. Parliamentary – identified by party abbreviation
-    #    No party found → incomplete → Other
+    # 3. Parliamentary
+    # a) Exact bilingual abbreviations from controlled vocabulary
     for party in PARTIES:
         if party in token:
             return f"Parliamentary ({party})"
+    # b) Alias patterns: catches variant spellings and continuation entities
+    #    where the LLM drops the "Parliamentary" keyword after the first pipe
+    for alias_re, canonical in PARTY_ALIAS_PATTERNS:
+        if alias_re.search(token):
+            return f"Parliamentary ({canonical})"
+    # c) "parliamentary" keyword present but no recognisable party → incomplete
     if "parliamentary" in tl:
         return "Other"
 
@@ -123,6 +233,26 @@ def _std_single(token: str, pubtime=None) -> str:
 
     # 6. Fallback
     return "Other"
+
+
+def _resolve_source_target_overlap(source_std, target_std):
+    """Remove from SOURCE any entity that also appears in TARGET.
+
+    If nothing remains in SOURCE after removal → SOURCE = 'Journalist'
+    (no independent critic could be identified).
+    If SOURCE already has other entities → just drop the overlapping one(s).
+    """
+    if pd.isna(source_std) or pd.isna(target_std):
+        return source_std
+
+    src_parts = [p.strip() for p in str(source_std).split("|") if p.strip()]
+    tgt_set   = {p.strip() for p in str(target_std).split("|") if p.strip()}
+
+    remaining = [p for p in src_parts if p not in tgt_set]
+
+    if not remaining:
+        return "Journalist"
+    return " | ".join(remaining)
 
 
 def _postprocess(parts: list[str]) -> str:
@@ -201,6 +331,12 @@ def main() -> int:
 
     df["SOURCE_STD"] = _std_row("SOURCE")
     df["TARGET_STD"] = _std_row("TARGET")
+
+    # SOURCE entities that duplicate TARGET are removed (or replaced by Journalist)
+    df["SOURCE_STD"] = df.apply(
+        lambda r: _resolve_source_target_overlap(r["SOURCE_STD"], r["TARGET_STD"]),
+        axis=1,
+    )
 
     # Rows without criticism should have empty STD columns, not "Other"
     if "CRITICISM" in df.columns:
