@@ -37,6 +37,15 @@ def _name_to_dept(pubtime) -> dict[str, str]:
     composition = get_council_for_date(pubtime)  # {dept: name}
     return {name: dept for dept, name in composition.items()}
 
+
+# Fallback: for each councillor, department from their most recent composition.
+# Used when pubtime pre-dates their actual tenure (LLM anachronism).
+_LAST_KNOWN_DEPT: dict[str, str] = {
+    name: dept
+    for _, _, comp in _COUNCIL_COMPOSITIONS
+    for dept, name in comp.items()
+}
+
 # ---------------------------------------------------------------------------
 # Controlled vocabulary constants
 # ---------------------------------------------------------------------------
@@ -87,7 +96,7 @@ def _std_single(token: str, pubtime=None) -> str:
     n2d = _name_to_dept(pubtime)
     for name in ALL_COUNCILLORS:
         if name.lower() in tl:
-            dept = n2d.get(name, "")
+            dept = n2d.get(name) or _LAST_KNOWN_DEPT.get(name, "")
             return f"CF ({name} — {dept})" if dept else f"CF ({name})"
 
     # 2. Federal Department — incomplete (no dept abbrev found) → Other
