@@ -35,7 +35,7 @@ fi
 
 OUTDIR="${WORKDIR}/data/output"
 INPUT="${OUTDIR}/run2_merged_job${ARRAY_JOB_ID}/results.parquet"
-OUTPUT="${OUTDIR}/run2_standardized_job${ARRAY_JOB_ID}.parquet"
+OUTPUT="${OUTDIR}/run2_standardized_job${SLURM_JOB_ID}.parquet"
 
 echo "=== STANDARDIZE run2 (array job ${ARRAY_JOB_ID}) ==="
 echo "DATE=$(date -Is)"
@@ -43,10 +43,21 @@ echo "INPUT=${INPUT}"
 echo "OUTPUT=${OUTPUT}"
 
 if [ ! -f "$INPUT" ]; then
-    # Fallback: flat merged file (if archive step was skipped)
-    INPUT="${OUTDIR}/run2_merged_job${ARRAY_JOB_ID}.parquet"
-    echo "[warn] archive path not found, trying flat path: ${INPUT}"
+    FLAT="${OUTDIR}/run2_merged_job${ARRAY_JOB_ID}.parquet"
+    if [ -f "$FLAT" ]; then
+        INPUT="$FLAT"
+        echo "[warn] archive path not found, using flat parquet: ${INPUT}"
+    else
+        echo "[ERROR] Aucun fichier d'entrée trouvé."
+        echo "  Cherché : ${INPUT}"
+        echo "  Cherché : ${FLAT}"
+        echo "  Contenu de ${OUTDIR} :"
+        ls -lh "${OUTDIR}" 2>/dev/null || echo "  (répertoire introuvable)"
+        exit 1
+    fi
 fi
+
+echo "INPUT final : ${INPUT}"
 
 python3 scripts/standardize_run2.py \
     --input  "$INPUT" \
