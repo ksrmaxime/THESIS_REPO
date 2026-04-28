@@ -10,11 +10,11 @@
 #SBATCH --mail-type=END,FAIL
 
 # Usage (run after merge):
-#   sbatch sbatch_standardize_run2.sh <ARRAY_JOB_ID>
+#   sbatch sbatch_standardize_run2.sh <MERGE_JOB_ID>
 #
-# Or chained automatically after the merge job:
+# Or chained automatically après le merge :
 #   MERGE_ID=$(sbatch --parsable --dependency=afterok:${ARRAY_ID} sbatch_merge_run2.sh ${ARRAY_ID}) && \
-#   sbatch --dependency=afterok:${MERGE_ID} sbatch_standardize_run2.sh ${ARRAY_ID}
+#   sbatch --dependency=afterok:${MERGE_ID} sbatch_standardize_run2.sh ${MERGE_ID}
 
 set -euo pipefail
 
@@ -27,23 +27,23 @@ source .venv/bin/activate
 
 mkdir -p logs
 
-ARRAY_JOB_ID=${1:-""}
-if [ -z "$ARRAY_JOB_ID" ]; then
-    echo "[ERROR] Passer le ARRAY_JOB_ID en argument: sbatch sbatch_standardize_run2.sh <ARRAY_JOB_ID>"
+MERGE_JOB_ID=${1:-""}
+if [ -z "$MERGE_JOB_ID" ]; then
+    echo "[ERROR] Passer le MERGE_JOB_ID en argument: sbatch sbatch_standardize_run2.sh <MERGE_JOB_ID>"
     exit 1
 fi
 
 OUTDIR="${WORKDIR}/data/output"
-INPUT="${OUTDIR}/run2_merged_job${ARRAY_JOB_ID}/results.parquet"
-OUTPUT="${OUTDIR}/run2_standardized_job${SLURM_JOB_ID}.parquet"
+INPUT="${OUTDIR}/run2_merged_job${MERGE_JOB_ID}/results.parquet"
+OUTPUT_DIR="${OUTDIR}/run2_standardized_job${SLURM_JOB_ID}"
 
-echo "=== STANDARDIZE run2 (array job ${ARRAY_JOB_ID}) ==="
+echo "=== STANDARDIZE run2 (merged job ${MERGE_JOB_ID}) → job ${SLURM_JOB_ID} ==="
 echo "DATE=$(date -Is)"
 echo "INPUT=${INPUT}"
-echo "OUTPUT=${OUTPUT}"
+echo "OUTPUT_DIR=${OUTPUT_DIR}"
 
 if [ ! -f "$INPUT" ]; then
-    FLAT="${OUTDIR}/run2_merged_job${ARRAY_JOB_ID}.parquet"
+    FLAT="${OUTDIR}/run2_merged_job${MERGE_JOB_ID}.parquet"
     if [ -f "$FLAT" ]; then
         INPUT="$FLAT"
         echo "[warn] archive path not found, using flat parquet: ${INPUT}"
@@ -60,8 +60,10 @@ fi
 echo "INPUT final : ${INPUT}"
 
 python3 scripts/standardize_run2.py \
-    --input  "$INPUT" \
-    --output "$OUTPUT"
+    --input      "$INPUT" \
+    --output_dir "$OUTPUT_DIR"
 
 echo "=== DONE ==="
-echo "Output: ${OUTPUT}"
+echo "Output folder: ${OUTPUT_DIR}"
+echo "  results.parquet"
+echo "  results.csv"

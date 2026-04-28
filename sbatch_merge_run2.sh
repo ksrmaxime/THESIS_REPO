@@ -32,10 +32,10 @@ fi
 
 OUTDIR="${WORKDIR}/data/output"
 OUTBASE="${OUTDIR}/run2"
-MERGED_PARQUET="${OUTDIR}/run2_merged_job${ARRAY_JOB_ID}.parquet"
-MERGED_CSV="${OUTDIR}/run2_merged_job${ARRAY_JOB_ID}.csv"
+MERGED_PARQUET="${OUTDIR}/run2_merged_job${SLURM_JOB_ID}.parquet"
+MERGED_CSV="${OUTDIR}/run2_merged_job${SLURM_JOB_ID}.csv"
 
-echo "=== MERGE run2 array job ${ARRAY_JOB_ID} ==="
+echo "=== MERGE run2 array job ${ARRAY_JOB_ID} → merge job ${SLURM_JOB_ID} ==="
 echo "DATE=$(date -Is)"
 
 export OUTBASE ARRAY_JOB_ID MERGED_PARQUET MERGED_CSV
@@ -89,7 +89,7 @@ PYEOF
 # ARCHIVE
 # =============================================================================
 
-RUN_DIR="${WORKDIR}/data/output/run2_merged_job${ARRAY_JOB_ID}"
+RUN_DIR="${WORKDIR}/data/output/run2_merged_job${SLURM_JOB_ID}"
 mkdir -p "$RUN_DIR"
 
 cp "$MERGED_CSV"                "${RUN_DIR}/results.csv"          || true

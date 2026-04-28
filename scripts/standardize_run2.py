@@ -144,12 +144,12 @@ KEEP_COLS = [
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Standardise RUN2 SOURCE / TARGET columns.")
-    ap.add_argument("--input",  required=True, help="Path to RUN2 merged output (.parquet or .csv)")
-    ap.add_argument("--output", required=True, help="Destination file (.parquet or .csv)")
+    ap.add_argument("--input",      required=True, help="Path to RUN2 merged output (.parquet or .csv)")
+    ap.add_argument("--output_dir", required=True, help="Output folder (created if absent); results.parquet + results.csv saved inside")
     args = ap.parse_args()
 
     in_path  = Path(args.input)
-    out_path = Path(args.output)
+    out_dir  = Path(args.output_dir)
 
     # Load
     if in_path.suffix == ".parquet":
@@ -183,14 +183,16 @@ def main() -> int:
         print(f"\n[{col}] top values:")
         print(counts.head(15).to_string())
 
-    # Save
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    if out_path.suffix == ".parquet":
-        df.to_parquet(out_path, index=False)
-    else:
-        df.to_csv(out_path, index=False, encoding="utf-8-sig")
+    # Save both formats inside the output folder
+    out_dir.mkdir(parents=True, exist_ok=True)
+    parquet_path = out_dir / "results.parquet"
+    csv_path     = out_dir / "results.csv"
 
-    print(f"\n[save] {len(df):,} rows → {out_path}")
+    df.to_parquet(parquet_path, index=False)
+    df.to_csv(csv_path, index=False, encoding="utf-8-sig")
+
+    print(f"\n[save] {len(df):,} rows → {parquet_path}")
+    print(f"[save] {len(df):,} rows → {csv_path}")
     return 0
 
 
