@@ -90,17 +90,18 @@ def _std_single(token: str, pubtime=None) -> str:
             dept = n2d.get(name, "")
             return f"CF ({name} — {dept})" if dept else f"CF ({name})"
 
-    # 2. Federal Department
+    # 2. Federal Department — incomplete (no dept abbrev found) → Other
     if "department" in tl:
         m = _DEPT_RE.search(token)
-        return f"FD ({m.group(1)})" if m else "FD"
+        return f"FD ({m.group(1)})" if m else "Other"
 
     # 3. Parliamentary – identified by party abbreviation
+    #    No party found → incomplete → Other
     for party in PARTIES:
         if party in token:
             return f"Parliamentary ({party})"
     if "parliamentary" in tl:
-        return "Parliamentary"
+        return "Other"
 
     # 4. Federal Council (collective body) — never "Federal Councillor"
     if _FC_RE.search(tl) and not _FCLR_RE.search(tl):
@@ -115,6 +116,20 @@ def _std_single(token: str, pubtime=None) -> str:
     return "Other"
 
 
+def _postprocess(parts: list[str]) -> str:
+    """Deduplicate and suppress Others when informative values exist."""
+    # Deduplicate preserving order
+    seen: list[str] = []
+    for p in parts:
+        if p not in seen:
+            seen.append(p)
+
+    informative = [p for p in seen if p != "Other"]
+    if informative:
+        return " | ".join(informative)   # drop Others when something useful exists
+    return "Other"                        # all Others → keep one
+
+
 def standardize_field(val, pubtime=None) -> str | float:
     """Standardise a full SOURCE or TARGET cell (may contain ' | ' separators)."""
     if val is None or (isinstance(val, float) and pd.isna(val)):
@@ -123,7 +138,8 @@ def standardize_field(val, pubtime=None) -> str | float:
     if not s or s.upper() in ("N/A", "NA", "NAN"):
         return val
     tokens = [t.strip() for t in s.split("|") if t.strip()]
-    return " | ".join(_std_single(t, pubtime) for t in tokens)
+    parts = [_std_single(t, pubtime) for t in tokens]
+    return _postprocess(parts)
 
 
 # ---------------------------------------------------------------------------
@@ -176,6 +192,15 @@ def main() -> int:
 
     df["SOURCE_STD"] = _std_row("SOURCE")
     df["TARGET_STD"] = _std_row("TARGET")
+
+    # Rows without criticism should have empty STD columns, not "Other"
+    if "CRITICISM" in df.columns:
+        no_crit = df["CRITICISM"].astype(str).str.strip().str.upper().isin(
+            ["NO", "FALSE", "0", "NAN", "NONE", ""]
+        )
+        df.loc[no_crit, "SOURCE_STD"] = pd.NA
+        df.loc[no_crit, "TARGET_STD"] = pd.NA
+        print(f"[criticism] {no_crit.sum():,} rows without criticism → STD columns left empty")
 
     # Quick summary
     for col in ("SOURCE_STD", "TARGET_STD"):
