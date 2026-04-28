@@ -194,7 +194,10 @@ def _std_single(token: str, pubtime=None) -> str:
 
     # 2. Federal Department
     if "department" in tl:
-        # a) Full bilingual pattern: DFAE/EDA, DETEC/UVEK, …
+        # a) LLM used the placeholder literally → group as Federal Administration
+        if re.search(r'\[', token):
+            return "Federal Administration"
+        # b) Full bilingual pattern: DFAE/EDA, DETEC/UVEK, …
         m = _DEPT_RE.search(token)
         if m:
             return f"FD ({m.group(1)})"
@@ -209,16 +212,20 @@ def _std_single(token: str, pubtime=None) -> str:
         return "Other"  # "department" in text but abbreviation unrecognised
 
     # 3. Parliamentary
-    # a) Exact bilingual abbreviations from controlled vocabulary
+    # a) LLM used the placeholder literally: "Parliamentary — [name/details not provided]"
+    #    Square brackets signal an unfilled template slot → group as Parliamentarians
+    if "parliamentary" in tl and re.search(r'\[', token):
+        return "Parliamentarians"
+    # b) Exact bilingual abbreviations from controlled vocabulary
     for party in PARTIES:
         if party in token:
             return f"Parliamentary ({party})"
-    # b) Alias patterns: catches variant spellings and continuation entities
+    # c) Alias patterns: catches variant spellings and continuation entities
     #    where the LLM drops the "Parliamentary" keyword after the first pipe
     for alias_re, canonical in PARTY_ALIAS_PATTERNS:
         if alias_re.search(token):
             return f"Parliamentary ({canonical})"
-    # c) "parliamentary" keyword present but no recognisable party → incomplete
+    # d) "parliamentary" keyword present but no recognisable party → incomplete
     if "parliamentary" in tl:
         return "Other"
 
