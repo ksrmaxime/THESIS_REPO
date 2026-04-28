@@ -30,6 +30,39 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 from matplotlib.colors import LinearSegmentedColormap
 
+# ── Journal grouping ─────────────────────────────────────────────────────────
+_JOURNAL_MAP: dict[str, str] = {
+    # NZZ
+    "nzz online":               "NZZ",
+    "nzz am sonntag":           "NZZ",
+    "neue zürcher zeitung":     "NZZ",
+    "nzz.ch":                   "NZZ",
+    # Le Temps
+    "le temps":                 "Le Temps",
+    "letemps.ch":               "Le Temps",
+    # Tages-Anzeiger
+    "tages-anzeiger":           "Tages-Anzeiger",
+    "tagesanzeiger.ch":         "Tages-Anzeiger",
+    "newsnet / tages-anzeiger": "Tages-Anzeiger",
+    # 24 heures
+    "newsnet / 24 heures":      "24 heures",
+    "24 heures":                "24 heures",
+    "24heures.ch":              "24 heures",
+    # 20 Minuten
+    "20 minuten online":        "20 Minuten",
+    # 20 Minutes
+    "20 minutes":               "20 Minutes",
+    "20 minutes online":        "20 Minutes",
+}
+
+
+def _normalize_medium(val) -> str:
+    """Return grouped journal name, falling back to the original value."""
+    if pd.isna(val):
+        return "Unknown"
+    return _JOURNAL_MAP.get(str(val).strip().lower(), str(val).strip())
+
+
 # ── Palette ──────────────────────────────────────────────────────────────────
 BLUE   = "#2563EB"
 RED    = "#DC2626"
@@ -405,13 +438,201 @@ def fig_what_by_target(df_crit: pd.DataFrame, out: Path) -> None:
     _save(fig, out / "fig11_what_by_target.png")
 
 
+def _extract_parties(val) -> list[str]:
+    """Return list of party names found in a SOURCE_STD cell."""
+    if pd.isna(val):
+        return []
+    return re.findall(r'Parliamentary \(([^)]+)\)', str(val))
+
+
+def _to_dept_label(val) -> str | None:
+    """Normalise a FD or CF standardised value to its department abbreviation."""
+    if pd.isna(val):
+        return None
+    s = str(val).strip()
+    if s.startswith("FD (") or s.startswith("CF ("):
+        return _dept_from_std(s)
+    return None
+
+
+def _cf_name(val) -> str | None:
+    """Extract councillor name from CF (Name — DEPT), stripping the dept part."""
+    if pd.isna(val):
+        return None
+    s = str(val).strip()
+    m = re.match(r'CF \(([^—]+?)(?:\s*—.*?)?\)', s)
+    return m.group(1).strip() if m else None
+
+
+def _draw_heatmap(ax, matrix: pd.DataFrame, fmt: str, cmap) -> None:
+    """Draw annotated heatmap on ax."""
+    im = ax.imshow(matrix.values, aspect="auto", cmap=cmap)
+    ax.set_xticks(range(len(matrix.columns)))
+    ax.set_xticklabels(matrix.columns, rotation=45, ha="right", fontsize=7)
+    ax.set_yticks(range(len(matrix.index)))
+    ax.set_yticklabels(matrix.index, fontsize=7)
+    plt.colorbar(im, ax=ax, fraction=0.03, pad=0.02)
+    vmax = matrix.values.max()
+    for i in range(len(matrix.index)):
+        for j in range(len(matrix.columns)):
+            v = matrix.values[i, j]
+            if v == 0:
+                continue
+            label = fmt.format(v)
+            ax.text(j, i, label, ha="center", va="center",
+                    fontsize=6, color="white" if v > vmax * 0.6 else "black")
+
+
+def fig_party_vs_target(df_full: pd.DataFrame, fig_dir: Path, tbl_dir: Path) -> None:
+    """Fig 13 — Which targets (dept/CF) are criticised by each parliamentary party."""
+    cmap = LinearSegmentedColormap.from_list("orange_scale", ["#FFF7ED", "#C2410C"])
+
+    rows = []
+    for _, row in df_full[["SOURCE_STD", "TARGET_STD"]].dropna().iterrows():
+        parties = _extract_parties(row["SOURCE_STD"])
+        if not parties:
+            continue
+        # Take the first TARGET entity for 1-to-1 pairing
+        tgt_raw = str(row["TARGET_STD"]).split("|")[0].strip()
+        for party in parties:
+            rows.append({"party": party, "target_raw": tgt_raw})
+
+    if not rows:
+        print("  [skip] no parliamentary source rows found")
+        return
+
+    tmp = pd.DataFrame(rows)
+
+    # ── Sub-fig A: party × target category ───────────────────────────────────
+    top_tgt = tmp["target_raw"].value_counts().head(12).index
+    sub_cat = tmp[tmp["target_raw"].isin(top_tgt)]
+    matrix_cat = sub_cat.groupby(["party", "target_raw"]).size().unstack(fill_value=0)
+    matrix_cat_pct = matrix_cat.div(matrix_cat.sum(axis=1), axis=0) * 100
+
+    # ── Sub-fig B: party × department (normalise CF → dept) ───────────────────
+    tmp["dept"] = tmp["target_raw"].map(_to_dept_label)
+    sub_dept = tmp.dropna(subset=["dept"])
+    matrix_dept = sub_dept.groupby(["party", "dept"]).size().unstack(fill_value=0)
+    matrix_dept_pct = matrix_dept.div(matrix_dept.sum(axis=1), axis=0) * 100
+
+    fig, axes = plt.subplots(2, 2, figsize=(20, max(8, len(matrix_cat) * 1.2 + 2)))
+
+    _draw_heatmap(axes[0][0], matrix_cat,     "{:.0f}",  cmap)
+    axes[0][0].set_title("Party × Target category  (counts)")
+    axes[0][0].set_xlabel("Target")
+    axes[0][0].set_ylabel("Party")
+
+    _draw_heatmap(axes[0][1], matrix_cat_pct, "{:.0f}%", cmap)
+    axes[0][1].set_title("Party × Target category  (% of party's criticisms)")
+    axes[0][1].set_xlabel("Target")
+
+    if not matrix_dept.empty:
+        _draw_heatmap(axes[1][0], matrix_dept,     "{:.0f}",  cmap)
+        axes[1][0].set_title("Party × Department targeted  (counts)")
+        axes[1][0].set_xlabel("Department")
+        axes[1][0].set_ylabel("Party")
+
+        _draw_heatmap(axes[1][1], matrix_dept_pct, "{:.0f}%", cmap)
+        axes[1][1].set_title("Party × Department targeted  (% of party's criticisms)")
+        axes[1][1].set_xlabel("Department")
+    else:
+        axes[1][0].axis("off")
+        axes[1][1].axis("off")
+
+    _save(fig, fig_dir / "fig13_party_vs_target.png",
+          "Parliamentary Parties — Who Do They Criticise?")
+
+    matrix_cat.to_csv(tbl_dir / "party_vs_target_counts.csv")
+    matrix_cat_pct.round(1).to_csv(tbl_dir / "party_vs_target_pct.csv")
+    if not matrix_dept.empty:
+        matrix_dept.to_csv(tbl_dir / "party_vs_dept_counts.csv")
+
+
+def fig_internal_federal(df_full: pd.DataFrame, fig_dir: Path, tbl_dir: Path) -> None:
+    """Fig 14 — CF/FD criticising another CF/FD (intra-federal dynamics).
+
+    Two levels:
+      A) Department-level: normalise both SOURCE and TARGET to dept abbreviation
+      B) Person-level: councillor name → councillor name (CF only)
+    """
+    cmap = LinearSegmentedColormap.from_list("red_scale", ["#FFF1F2", "#991B1B"])
+
+    # ── Filter: SOURCE and TARGET both CF or FD ───────────────────────────────
+    def _is_federal(val) -> bool:
+        if pd.isna(val):
+            return False
+        first = str(val).split("|")[0].strip()
+        return first.startswith("CF (") or first.startswith("FD (")
+
+    mask = df_full["SOURCE_STD"].map(_is_federal) & df_full["TARGET_STD"].map(_is_federal)
+    sub = df_full[mask].copy()
+
+    if sub.empty:
+        print("  [skip] no intra-federal rows found")
+        return
+
+    src_first = sub["SOURCE_STD"].str.split("|").str[0].str.strip()
+    tgt_first = sub["TARGET_STD"].str.split("|").str[0].str.strip()
+
+    # ── A) Department level ───────────────────────────────────────────────────
+    src_dept = src_first.map(_to_dept_label)
+    tgt_dept = tgt_first.map(_to_dept_label)
+    dept_df  = pd.DataFrame({"src": src_dept, "tgt": tgt_dept}).dropna()
+    matrix_dept = dept_df.groupby(["src", "tgt"]).size().unstack(fill_value=0)
+
+    # ── B) Person level (CF → CF only) ────────────────────────────────────────
+    cf_mask = src_first.str.startswith("CF (") & tgt_first.str.startswith("CF (")
+    src_name = src_first[cf_mask].map(_cf_name)
+    tgt_name = tgt_first[cf_mask].map(_cf_name)
+    person_df   = pd.DataFrame({"src": src_name, "tgt": tgt_name}).dropna()
+    matrix_person = (
+        person_df.groupby(["src", "tgt"]).size().unstack(fill_value=0)
+        if not person_df.empty else pd.DataFrame()
+    )
+
+    n_rows = 1 + (0 if matrix_person.empty else 1)
+    fig, axes = plt.subplots(n_rows, 2, figsize=(18, max(6, len(matrix_dept) * 0.8 + 2) * n_rows))
+    if n_rows == 1:
+        axes = [axes]
+
+    # Department-level heatmaps
+    matrix_dept_pct = matrix_dept.div(matrix_dept.sum(axis=1), axis=0) * 100
+    _draw_heatmap(axes[0][0], matrix_dept,     "{:.0f}",  cmap)
+    axes[0][0].set_title("Intra-federal: Dept → Dept  (counts)")
+    axes[0][0].set_xlabel("Target Department")
+    axes[0][0].set_ylabel("Source Department")
+
+    _draw_heatmap(axes[0][1], matrix_dept_pct, "{:.0f}%", cmap)
+    axes[0][1].set_title("Intra-federal: Dept → Dept  (% of source's criticisms)")
+    axes[0][1].set_xlabel("Target Department")
+
+    # Person-level heatmaps
+    if not matrix_person.empty:
+        matrix_person_pct = matrix_person.div(matrix_person.sum(axis=1), axis=0) * 100
+        _draw_heatmap(axes[1][0], matrix_person,     "{:.0f}",  cmap)
+        axes[1][0].set_title("Intra-federal: Councillor → Councillor  (counts)")
+        axes[1][0].set_xlabel("Target Councillor")
+        axes[1][0].set_ylabel("Source Councillor")
+
+        _draw_heatmap(axes[1][1], matrix_person_pct, "{:.0f}%", cmap)
+        axes[1][1].set_title("Intra-federal: Councillor → Councillor  (% stacked)")
+        axes[1][1].set_xlabel("Target Councillor")
+
+    _save(fig, fig_dir / "fig14_internal_federal.png",
+          "Intra-Federal Criticism  (CF/FD → CF/FD)")
+
+    matrix_dept.to_csv(tbl_dir / "internal_federal_dept_counts.csv")
+    if not matrix_person.empty:
+        matrix_person.to_csv(tbl_dir / "internal_federal_person_counts.csv")
+
+
 def fig_medium_breakdown(df_crit: pd.DataFrame, out: Path) -> None:
-    """Fig 12 — Top newspapers by criticism volume."""
-    top_media = df_crit["medium_name"].fillna("Unknown").value_counts().head(15)
+    """Fig 12 — Top newspapers by criticism volume (grouped journals)."""
+    top_media = df_crit["medium_group"].value_counts().head(15)
 
     fig, ax = plt.subplots(figsize=(10, max(4, len(top_media) * 0.45)))
     _bar_h(ax, top_media, pct_total=len(df_crit))
-    ax.set_title("Top 15 Media Outlets by Criticism Volume")
+    ax.set_title("Top 15 Media Outlets by Criticism Volume  (grouped)")
     ax.set_xlabel("Count")
     _save(fig, out / "fig12_media_breakdown.png")
 
@@ -488,8 +709,9 @@ def main() -> int:
     df = pd.read_parquet(in_path) if in_path.suffix == ".parquet" else pd.read_csv(in_path)
     print(f"[load] {len(df):,} rows")
 
-    df["pubtime"] = pd.to_datetime(df["pubtime"], errors="coerce")
-    df["quarter"] = df["pubtime"].dt.to_period("Q")
+    df["pubtime"]      = pd.to_datetime(df["pubtime"], errors="coerce")
+    df["quarter"]      = df["pubtime"].dt.to_period("Q")
+    df["medium_group"] = df["medium_name"].map(_normalize_medium)
 
     # ── Criticism subset ──────────────────────────────────────────────────────
     df_crit = df[df["CRITICISM"].map(_flag)].copy()
@@ -550,6 +772,14 @@ def main() -> int:
     # ── Fig 12 — Media ────────────────────────────────────────────────────────
     print("[fig12] media breakdown")
     fig_medium_breakdown(df_crit, fig_dir)
+
+    # ── Fig 13 — Parliamentary parties × targets ──────────────────────────────
+    print("[fig13] parliamentary parties vs targets")
+    fig_party_vs_target(df_full, fig_dir, tbl_dir)
+
+    # ── Fig 14 — Intra-federal criticism ──────────────────────────────────────
+    print("[fig14] intra-federal CF/FD → CF/FD")
+    fig_internal_federal(df_full, fig_dir, tbl_dir)
 
     # ── Report ────────────────────────────────────────────────────────────────
     print("[report]")
