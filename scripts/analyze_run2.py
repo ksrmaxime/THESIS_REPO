@@ -455,6 +455,14 @@ def _to_dept_label(val) -> str | None:
     return None
 
 
+def _fd_dept_label(val) -> str | None:
+    """Extract dept abbreviation ONLY from FD entries (not CF)."""
+    if pd.isna(val):
+        return None
+    s = str(val).strip()
+    return _dept_from_std(s) if s.startswith("FD (") else None
+
+
 def _cf_name(val) -> str | None:
     """Extract councillor name from CF (Name — DEPT), stripping the dept part."""
     if pd.isna(val):
@@ -509,13 +517,35 @@ def fig_party_vs_target(df_full: pd.DataFrame, fig_dir: Path, tbl_dir: Path) -> 
     matrix_cat = sub_cat.groupby(["party", "target_raw"]).size().unstack(fill_value=0)
     matrix_cat_pct = matrix_cat.div(matrix_cat.sum(axis=1), axis=0) * 100
 
-    # ── Sub-fig B: party × department (normalise CF → dept) ───────────────────
+    # ── Sub-fig B: party × department (normalise CF+FD → dept) ──────────────
     tmp["dept"] = tmp["target_raw"].map(_to_dept_label)
     sub_dept = tmp.dropna(subset=["dept"])
     matrix_dept = sub_dept.groupby(["party", "dept"]).size().unstack(fill_value=0)
     matrix_dept_pct = matrix_dept.div(matrix_dept.sum(axis=1), axis=0) * 100
 
-    fig, axes = plt.subplots(2, 2, figsize=(20, max(8, len(matrix_cat) * 1.2 + 2)))
+    # ── Sub-fig C: party × FD-or-CF preference ───────────────────────────────
+    def _fd_or_cf(val: str) -> str | None:
+        if val.startswith("FD ("):
+            return "Department (FD)"
+        if val.startswith("CF ("):
+            return "Person (CF)"
+        return None
+
+    tmp["fd_cf"] = tmp["target_raw"].map(_fd_or_cf)
+    sub_fdcf = tmp.dropna(subset=["fd_cf"])
+    if not sub_fdcf.empty:
+        matrix_fdcf = (
+            sub_fdcf.groupby(["party", "fd_cf"]).size()
+            .unstack(fill_value=0)
+            .reindex(columns=["Department (FD)", "Person (CF)"], fill_value=0)
+        )
+        matrix_fdcf_pct = matrix_fdcf.div(matrix_fdcf.sum(axis=1), axis=0) * 100
+        # Sort parties by preference for CF over FD (descending % CF)
+        if "Person (CF)" in matrix_fdcf_pct.columns:
+            matrix_fdcf_pct = matrix_fdcf_pct.sort_values("Person (CF)")
+            matrix_fdcf     = matrix_fdcf.loc[matrix_fdcf_pct.index]
+
+    fig, axes = plt.subplots(3, 2, figsize=(20, max(12, len(matrix_cat) * 1.2 + 6)))
 
     _draw_heatmap(axes[0][0], matrix_cat,     "{:.0f}",  cmap)
     axes[0][0].set_title("Party × Target category  (counts)")
@@ -539,6 +569,28 @@ def fig_party_vs_target(df_full: pd.DataFrame, fig_dir: Path, tbl_dir: Path) -> 
         axes[1][0].axis("off")
         axes[1][1].axis("off")
 
+    if not sub_fdcf.empty:
+        colors = [BLUE, RED]
+        matrix_fdcf.plot(kind="barh", ax=axes[2][0],
+                         color=colors, stacked=False)
+        axes[2][0].set_title("Department vs Person — by party  (raw counts)")
+        axes[2][0].set_xlabel("Count")
+        axes[2][0].set_ylabel("Party")
+        axes[2][0].legend(fontsize=8)
+
+        matrix_fdcf_pct.plot(kind="barh", ax=axes[2][1],
+                              color=colors, stacked=True)
+        axes[2][1].set_title("Department vs Person — by party  (% stacked)")
+        axes[2][1].set_xlabel("% of criticisms targeting federal executive")
+        axes[2][1].xaxis.set_major_formatter(
+            mticker.FuncFormatter(lambda x, _: f"{x:.0f}%"))
+        axes[2][1].legend(fontsize=8)
+        for label in axes[2][1].get_yticklabels():
+            label.set_fontsize(8)
+    else:
+        axes[2][0].axis("off")
+        axes[2][1].axis("off")
+
     _save(fig, fig_dir / "fig13_party_vs_target.png",
           "Parliamentary Parties — Who Do They Criticise?")
 
@@ -546,6 +598,9 @@ def fig_party_vs_target(df_full: pd.DataFrame, fig_dir: Path, tbl_dir: Path) -> 
     matrix_cat_pct.round(1).to_csv(tbl_dir / "party_vs_target_pct.csv")
     if not matrix_dept.empty:
         matrix_dept.to_csv(tbl_dir / "party_vs_dept_counts.csv")
+    if not sub_fdcf.empty:
+        matrix_fdcf.to_csv(tbl_dir / "party_vs_fd_cf_counts.csv")
+        matrix_fdcf_pct.round(1).to_csv(tbl_dir / "party_vs_fd_cf_pct.csv")
 
 
 def fig_internal_federal(df_full: pd.DataFrame, fig_dir: Path, tbl_dir: Path) -> None:
@@ -574,56 +629,83 @@ def fig_internal_federal(df_full: pd.DataFrame, fig_dir: Path, tbl_dir: Path) ->
     src_first = sub["SOURCE_STD"].str.split("|").str[0].str.strip()
     tgt_first = sub["TARGET_STD"].str.split("|").str[0].str.strip()
 
-    # ── A) Department level ───────────────────────────────────────────────────
-    src_dept = src_first.map(_to_dept_label)
-    tgt_dept = tgt_first.map(_to_dept_label)
-    dept_df  = pd.DataFrame({"src": src_dept, "tgt": tgt_dept}).dropna()
-    matrix_dept = dept_df.groupby(["src", "tgt"]).size().unstack(fill_value=0)
+    def _build(src_series, tgt_series) -> pd.DataFrame:
+        df_ = pd.DataFrame({"src": src_series, "tgt": tgt_series}).dropna()
+        if df_.empty:
+            return pd.DataFrame()
+        return df_.groupby(["src", "tgt"]).size().unstack(fill_value=0)
 
-    # ── B) Person level (CF → CF only) ────────────────────────────────────────
-    cf_mask = src_first.str.startswith("CF (") & tgt_first.str.startswith("CF (")
-    src_name = src_first[cf_mask].map(_cf_name)
-    tgt_name = tgt_first[cf_mask].map(_cf_name)
-    person_df   = pd.DataFrame({"src": src_name, "tgt": tgt_name}).dropna()
-    matrix_person = (
-        person_df.groupby(["src", "tgt"]).size().unstack(fill_value=0)
-        if not person_df.empty else pd.DataFrame()
+    def _pct(m: pd.DataFrame) -> pd.DataFrame:
+        return m.div(m.sum(axis=1), axis=0) * 100
+
+    def _row(ax_counts, ax_pct, matrix, title_counts, title_pct,
+             xlabel, ylabel) -> None:
+        if matrix.empty:
+            ax_counts.axis("off")
+            ax_pct.axis("off")
+            return
+        _draw_heatmap(ax_counts, matrix,       "{:.0f}",  cmap)
+        ax_counts.set_title(title_counts)
+        ax_counts.set_xlabel(xlabel)
+        ax_counts.set_ylabel(ylabel)
+        _draw_heatmap(ax_pct,   _pct(matrix),  "{:.0f}%", cmap)
+        ax_pct.set_title(title_pct)
+        ax_pct.set_xlabel(xlabel)
+
+    # ── A) FD → FD ────────────────────────────────────────────────────────────
+    fd_fd = _build(
+        src_first.map(_fd_dept_label),
+        tgt_first.map(_fd_dept_label),
     )
 
-    n_rows = 1 + (0 if matrix_person.empty else 1)
-    fig, axes = plt.subplots(n_rows, 2, figsize=(18, max(6, len(matrix_dept) * 0.8 + 2) * n_rows))
-    if n_rows == 1:
-        axes = [axes]
+    # ── B) CF → CF ────────────────────────────────────────────────────────────
+    cf_mask = src_first.str.startswith("CF (") & tgt_first.str.startswith("CF (")
+    cf_cf = _build(
+        src_first[cf_mask].map(_cf_name),
+        tgt_first[cf_mask].map(_cf_name),
+    )
 
-    # Department-level heatmaps
-    matrix_dept_pct = matrix_dept.div(matrix_dept.sum(axis=1), axis=0) * 100
-    _draw_heatmap(axes[0][0], matrix_dept,     "{:.0f}",  cmap)
-    axes[0][0].set_title("Intra-federal: Dept → Dept  (counts)")
-    axes[0][0].set_xlabel("Target Department")
-    axes[0][0].set_ylabel("Source Department")
+    # ── C) CF → FD  (councillor criticises a department) ─────────────────────
+    cf_fd_mask = src_first.str.startswith("CF (") & tgt_first.str.startswith("FD (")
+    cf_fd = _build(
+        src_first[cf_fd_mask].map(_cf_name),
+        tgt_first[cf_fd_mask].map(_fd_dept_label),
+    )
 
-    _draw_heatmap(axes[0][1], matrix_dept_pct, "{:.0f}%", cmap)
-    axes[0][1].set_title("Intra-federal: Dept → Dept  (% of source's criticisms)")
-    axes[0][1].set_xlabel("Target Department")
+    # ── D) FD → CF  (department criticises a councillor) ─────────────────────
+    fd_cf_mask = src_first.str.startswith("FD (") & tgt_first.str.startswith("CF (")
+    fd_cf = _build(
+        src_first[fd_cf_mask].map(_fd_dept_label),
+        tgt_first[fd_cf_mask].map(_cf_name),
+    )
 
-    # Person-level heatmaps
-    if not matrix_person.empty:
-        matrix_person_pct = matrix_person.div(matrix_person.sum(axis=1), axis=0) * 100
-        _draw_heatmap(axes[1][0], matrix_person,     "{:.0f}",  cmap)
-        axes[1][0].set_title("Intra-federal: Councillor → Councillor  (counts)")
-        axes[1][0].set_xlabel("Target Councillor")
-        axes[1][0].set_ylabel("Source Councillor")
+    fig, axes = plt.subplots(4, 2, figsize=(20, 32))
 
-        _draw_heatmap(axes[1][1], matrix_person_pct, "{:.0f}%", cmap)
-        axes[1][1].set_title("Intra-federal: Councillor → Councillor  (% stacked)")
-        axes[1][1].set_xlabel("Target Councillor")
+    _row(axes[0][0], axes[0][1], fd_fd,
+         "FD → FD  (counts)",     "FD → FD  (% of source)",
+         "Target Department",     "Source Department")
+
+    _row(axes[1][0], axes[1][1], cf_cf,
+         "CF → CF  (counts)",     "CF → CF  (% of source)",
+         "Target Councillor",     "Source Councillor")
+
+    _row(axes[2][0], axes[2][1], cf_fd,
+         "CF → FD  (counts)",     "CF → FD  (% of source)",
+         "Target Department",     "Source Councillor")
+
+    _row(axes[3][0], axes[3][1], fd_cf,
+         "FD → CF  (counts)",     "FD → CF  (% of source)",
+         "Target Councillor",     "Source Department")
 
     _save(fig, fig_dir / "fig14_internal_federal.png",
-          "Intra-Federal Criticism  (CF/FD → CF/FD)")
+          "Intra-Federal Criticism  (all CF/FD combinations)")
 
-    matrix_dept.to_csv(tbl_dir / "internal_federal_dept_counts.csv")
-    if not matrix_person.empty:
-        matrix_person.to_csv(tbl_dir / "internal_federal_person_counts.csv")
+    for matrix, name in [
+        (fd_fd, "fd_fd"), (cf_cf, "cf_cf"),
+        (cf_fd, "cf_fd"), (fd_cf, "fd_cf"),
+    ]:
+        if not matrix.empty:
+            matrix.to_csv(tbl_dir / f"internal_{name}_counts.csv")
 
 
 def fig_medium_breakdown(df_crit: pd.DataFrame, out: Path) -> None:
