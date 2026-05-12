@@ -35,8 +35,7 @@ mkdir -p "${TMPDIR}"
 python scripts/download.py \
   --start 2000-01-01 \
   --end   2025-12-31 \
-  --max-results 500000 \
-  --resume-query-id 3fdfba46-6535-4df7-8fc3-7e3e1cec7bae \
+  --max-results 1000000 \
   --outdir data/input
 
 echo "Job finished."

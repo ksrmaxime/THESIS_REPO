@@ -254,8 +254,8 @@ def build_query_payload(
         "languages": languages,
         "content": {
             "OR": [
-                {"OR": DE_TERMS},
-                {"OR": FR_TERMS},
+                {"AND": [{"OR": DE_TERMS}, {"OR": DE_LEVEL}]},
+                {"AND": [{"OR": FR_TERMS}, {"OR": FR_LEVEL}]},
                 {"OR": DEPARTMENTS},
                 {"OR": ADMIN_UNITS},
                 {"OR": INDEPENDENT_AGENCIES},
@@ -553,8 +553,10 @@ def run_pipeline(
 
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    run_tag = time.strftime("%Y%m%d_%H%M%S")
+
     # One full parquet for downstream pipeline use
-    p_parquet = out_dir / "swissdox_all.parquet"
+    p_parquet = out_dir / f"swissdox_all_{run_tag}.parquet"
     df_leads.to_parquet(p_parquet, index=False)
     print(f"[Swissdox] saved full parquet → {p_parquet}")
 
@@ -565,12 +567,12 @@ def run_pipeline(
             lambda d: d.year if hasattr(d, "year") else int(str(d)[:4])
         )
         for year, df_year in df_leads.drop(columns="_year").groupby(df_leads["_year"]):
-            p_csv = out_dir / f"swissdox_{year}.csv"
+            p_csv = out_dir / f"swissdox_{year}_{run_tag}.csv"
             df_year.to_csv(p_csv, index=False)
             print(f"[Swissdox] saved year {year} CSV ({len(df_year):,} rows) → {p_csv}")
             out_paths[f"csv_{year}"] = p_csv
     else:
-        p_csv = out_dir / "swissdox_all.csv"
+        p_csv = out_dir / f"swissdox_all_{run_tag}.csv"
         df_leads.to_csv(p_csv, index=False)
         out_paths["csv_all"] = p_csv
 
