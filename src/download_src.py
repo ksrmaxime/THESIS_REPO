@@ -326,8 +326,8 @@ class SwissdoxClient:
         self,
         query_id: str,
         *,
-        max_wait_s: int = 25 * 60,
-        poll_every_s: int = 5,
+        max_wait_s: int = 4 * 60 * 60,
+        poll_every_s: int = 30,
     ) -> str:
         deadline = time.time() + max_wait_s
         while time.time() < deadline:
