@@ -498,7 +498,6 @@ def run_pipeline(
     query_name: str,
     comment: str,
     out_dir: Path,
-    file_stem: str = "swissdox_articles_lead",
     test: bool = False,
 ) -> Dict[str, Path]:
     load_dotenv()
@@ -549,13 +548,25 @@ def run_pipeline(
 
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    p_articles_parquet = out_dir / f"{file_stem}.parquet"
-    p_articles_csv = out_dir / f"{file_stem}.csv"
+    # One full parquet for downstream pipeline use
+    p_parquet = out_dir / "swissdox_all.parquet"
+    df_leads.to_parquet(p_parquet, index=False)
+    print(f"[Swissdox] saved full parquet → {p_parquet}")
 
-    df_leads.to_parquet(p_articles_parquet, index=False)
-    df_leads.to_csv(p_articles_csv, index=False)
+    # One CSV per year for easy inspection
+    out_paths: Dict[str, Path] = {"full_parquet": p_parquet}
+    if "pubtime" in df_leads.columns:
+        df_leads["_year"] = df_leads["pubtime"].apply(
+            lambda d: d.year if hasattr(d, "year") else int(str(d)[:4])
+        )
+        for year, df_year in df_leads.drop(columns="_year").groupby(df_leads["_year"]):
+            p_csv = out_dir / f"swissdox_{year}.csv"
+            df_year.to_csv(p_csv, index=False)
+            print(f"[Swissdox] saved year {year} CSV ({len(df_year):,} rows) → {p_csv}")
+            out_paths[f"csv_{year}"] = p_csv
+    else:
+        p_csv = out_dir / "swissdox_all.csv"
+        df_leads.to_csv(p_csv, index=False)
+        out_paths["csv_all"] = p_csv
 
-    return {
-        "articles_lead_parquet": p_articles_parquet,
-        "articles_lead_csv": p_articles_csv,
-    }
+    return out_paths

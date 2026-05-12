@@ -15,9 +15,9 @@ from src.download_src import run_pipeline
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--start", default="2025-01-01")
+    ap.add_argument("--start", default="2000-01-01")
     ap.add_argument("--end", default="2025-12-31")
-    ap.add_argument("--max-results", type=int, default=20000)
+    ap.add_argument("--max-results", type=int, default=500000)
     ap.add_argument("--outdir", default="data/input")
     ap.add_argument("--test", action="store_true", help="Swissdox test mode (if supported)")
     args = ap.parse_args()
@@ -39,7 +39,6 @@ def main() -> None:
         query_name=query_name,
         comment=comment,
         out_dir=Path(args.outdir),
-        file_stem=f"swissdox_{args.start[:4]}_{args.end[:4]}",
         test=args.test,
     )
 
