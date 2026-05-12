@@ -326,8 +326,8 @@ class SwissdoxClient:
         self,
         query_id: str,
         *,
-        max_wait_s: int = 4 * 60 * 60,
-        poll_every_s: int = 30,
+        max_wait_s: int = 24 * 60 * 60,
+        poll_every_s: int = 60,
     ) -> str:
         deadline = time.time() + max_wait_s
         while time.time() < deadline:
@@ -498,6 +498,7 @@ def run_pipeline(
     query_name: str,
     comment: str,
     out_dir: Path,
+    resume_query_id: str | None = None,
     test: bool = False,
 ) -> Dict[str, Path]:
     load_dotenv()
@@ -506,27 +507,31 @@ def run_pipeline(
     if not api_key or not api_secret:
         raise RuntimeError("Missing SWISSDOX_API_KEY / SWISSDOX_API_SECRET in .env")
 
-    payload = build_query_payload(
-        start_date=start_date,
-        end_date=end_date,
-        languages=languages,
-        sources=sources,
-        max_results=max_results,
-        columns=DEFAULT_COLUMNS,
-        query_name=query_name,
-        comment=comment,
-        expiration_date=expiration_date,
-    )
-
     client = SwissdoxClient(api_key=api_key, api_secret=api_secret)
-    qid = client.submit_query(
-        payload["yaml_payload"],
-        name=payload["meta"]["name"],
-        comment=payload["meta"]["comment"],
-        expiration_date=payload["meta"]["expirationDate"],
-        test=test,
-    )
-    print(f"[Swissdox] queryId={qid}")
+
+    if resume_query_id:
+        print(f"[Swissdox] Resuming existing queryId={resume_query_id} (skipping submission)")
+        qid = resume_query_id
+    else:
+        payload = build_query_payload(
+            start_date=start_date,
+            end_date=end_date,
+            languages=languages,
+            sources=sources,
+            max_results=max_results,
+            columns=DEFAULT_COLUMNS,
+            query_name=query_name,
+            comment=comment,
+            expiration_date=expiration_date,
+        )
+        qid = client.submit_query(
+            payload["yaml_payload"],
+            name=payload["meta"]["name"],
+            comment=payload["meta"]["comment"],
+            expiration_date=payload["meta"]["expirationDate"],
+            test=test,
+        )
+        print(f"[Swissdox] queryId={qid}")
 
     url = client.wait_for_download_url(qid)
     print(f"[Swissdox] downloadUrl={url}")

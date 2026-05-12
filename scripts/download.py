@@ -19,6 +19,8 @@ def main() -> None:
     ap.add_argument("--end", default="2025-12-31")
     ap.add_argument("--max-results", type=int, default=500000)
     ap.add_argument("--outdir", default="data/input")
+    ap.add_argument("--resume-query-id", default=None,
+                    help="Skip submission and resume polling an existing Swissdox queryId")
     ap.add_argument("--test", action="store_true", help="Swissdox test mode (if supported)")
     args = ap.parse_args()
 
@@ -39,6 +41,7 @@ def main() -> None:
         query_name=query_name,
         comment=comment,
         out_dir=Path(args.outdir),
+        resume_query_id=args.resume_query_id,
         test=args.test,
     )
 
