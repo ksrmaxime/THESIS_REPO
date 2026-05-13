@@ -254,8 +254,8 @@ def build_query_payload(
         "languages": languages,
         "content": {
             "OR": [
-                {"AND": [{"OR": DE_TERMS}, {"OR": DE_LEVEL}]},
-                {"AND": [{"OR": FR_TERMS}, {"OR": FR_LEVEL}]},
+                {"OR": DE_TERMS},
+                {"OR": FR_TERMS},
                 {"OR": DEPARTMENTS},
                 {"OR": ADMIN_UNITS},
                 {"OR": INDEPENDENT_AGENCIES},
