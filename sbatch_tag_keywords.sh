@@ -36,7 +36,7 @@ mkdir -p "${TMPDIR}"
 # Outputs are written alongside the originals with a _tagged suffix.
 # Use --outdir to redirect to a different directory if needed.
 python scripts/tag_keywords.py \
-  --indir data/input/swissdox_2025.csv \
+  --infile data/input/swissdox_2025.csv \
   --outdir data/input
 
 echo "Job finished."
