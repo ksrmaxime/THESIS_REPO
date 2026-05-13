@@ -15,6 +15,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import csv
 import re
 import sys
 import time
@@ -82,7 +83,7 @@ def process_file(src: Path, dst: Path) -> None:
     if dst.suffix.lower() == ".parquet":
         df.to_parquet(dst, index=False)
     else:
-        df.to_csv(dst, index=False)
+        df.to_csv(dst, index=False, quoting=csv.QUOTE_NONNUMERIC, lineterminator="\n")
     print(f"  Saved → {dst}")
 
 
