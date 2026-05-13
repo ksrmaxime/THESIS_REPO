@@ -187,6 +187,20 @@ for _kw in DEPARTMENTS + ADMIN_UNITS + INDEPENDENT_AGENCIES:
 
 
 # ---------------------------------------------------------------------------
+# Boilerplate stripping
+# ---------------------------------------------------------------------------
+
+# Phrases injected by web scrapers / newsletter forms that pollute article text.
+_BOILERPLATE_RE = re.compile(
+    r'if\s+you\s+are\s+a\s+human[^.]*',
+    re.IGNORECASE,
+)
+
+def _strip_boilerplate(text: str) -> str:
+    return _BOILERPLATE_RE.sub(" ", text)
+
+
+# ---------------------------------------------------------------------------
 # Matching
 # ---------------------------------------------------------------------------
 
@@ -194,6 +208,7 @@ def find_matched_keywords(text: str, lang: str) -> str:
     """Return pipe-separated list of keywords found in *text* for article language *lang*."""
     if not isinstance(text, str) or not text:
         return ""
+    text = _strip_boilerplate(text)
     matched: list[str] = []
     for kw, pat, kw_lang in _ALL_PATTERNS:
         if kw_lang in ("both", lang) and pat.search(text):
