@@ -194,60 +194,34 @@ for _kw in DEPARTMENTS + ADMIN_UNITS + INDEPENDENT_AGENCIES:
 def _build_superseded_by() -> dict[str, frozenset[str]]:
     result: dict[str, set[str]] = {}
 
-    # Auto-extract from ADMIN_UNITS and INDEPENDENT_AGENCIES.
-    # Pattern: a long term (>12 chars, has spaces) immediately followed by a
-    # compact term (≤12 chars, no internal spaces) = full-name / abbreviation pair.
+    # ADMIN_UNITS and INDEPENDENT_AGENCIES are structured as consecutive
+    # (full_name, abbreviation) pairs. Whenever entry[i] is longer than
+    # entry[i+1], they form such a pair.
     for lst in (ADMIN_UNITS, INDEPENDENT_AGENCIES):
         for i in range(len(lst) - 1):
             full, short = lst[i], lst[i + 1]
-            if len(full) > 12 and " " in full and len(short) <= 12 and " " not in short:
+            if len(full) > len(short):
                 result.setdefault(short, set()).add(full)
 
-    # Manual additions:
-    # – DEPARTMENTS (structure is [abbrev, abbrev, fullname, fullname], not auto-detectable)
-    # – Cross-language brand names (auto-scan only catches the language whose full name precedes the brand)
-    # – Short forms that contain a space (skipped by auto-scan)
-    _MANUAL: dict[str, set[str]] = {
-        # ── Federal departments ──────────────────────────────────────────────
-        "VBS":   {"Eidgenössische Departement für Verteidigung, Bevölkerungsschutz und Sport"},
-        "EDA":   {"Eidgenössische Departement für auswärtige Angelegenheiten"},
-        "UVEK":  {"Eidgenössische Departement für Umwelt, Verkehr, Energie und Kommunikation"},
-        "EJPD":  {"Eidgenössische Justiz- und Polizeidepartement"},
-        "EDI":   {"Eidgenössische Departement des Innern"},
-        "EFD":   {"Eidgenössische Finanzdepartement"},
-        "WBF":   {"Eidgenössische Departement für Wirtschaft, Bildung und Forschung"},
-        "DDPS":  {"Département fédéral de la défense, de la protection de la population et des sports"},
-        "DFAE":  {"Département fédéral des affaires étrangères"},
-        "DETEC": {"Département fédéral de l'environnement, des transports, de l'énergie et de la communication"},
-        "DFJP":  {"Département fédéral de justice et police"},
-        "DFI":   {"Département fédéral de l'intérieur"},
-        "DFF":   {"Département fédéral des finances"},
-        "DEFR":  {"Département fédéral de l'économie, de la formation et de la recherche"},
-        # ── Cross-language brand names (both full names) ─────────────────────
-        "armasuisse": {"Office fédéral de l'armement", "Bundesamt für Rüstung"},
-        "swisstopo":  {"Office fédéral de topographie", "Bundesamt für Landestopografie"},
-        "fedpol":     {"Office fédéral de la police", "Bundesamt für Polizei"},
-        "Innosuisse": {"Agence suisse pour l'encouragement de l'innovation",
-                       "Schweizerische Agentur für Innovationsförderung"},
-        "Swissmedic": {"Institut suisse des produits thérapeutiques", "Schweizerisches Heilmittelinstitut"},
-        "FINMA":      {"Autorité fédérale de surveillance des marchés financiers",
-                       "Eidgenössische Finanzmarktaufsicht"},
-        "SECO":       {"Secrétariat d'État à l'économie", "Staatssekretariat für Wirtschaft"},
-        "METAS":      {"Institut fédéral de métrologie", "Eidgenössisches Institut für Metrologie"},
-        "ARE":        {"Office fédéral du développement territorial", "Bundesamt für Raumentwicklung"},
-        "PUBLICA":    {"Caisse fédérale de pensions PUBLICA", "Pensionskasse des Bundes PUBLICA"},
-        "ComCom":     {"Commission fédérale de la communication", "Eidgenössische Kommunikationskommission"},
-        "PostCom":    {"Commission fédérale de la poste", "Eidgenössische Postkommission"},
-        "RailCom":    {"Commission des chemins de fer", "Kommission für den Eisenbahnverkehr"},
-        "SEM":        {"Secrétariat d'État aux migrations", "Staatssekretariat für Migration"},
-        # ── Short forms with spaces (skipped by auto-scan) ───────────────────
-        "Pro Helvetia":    {"Fondation suisse pour la culture Pro Helvetia",
-                            "Schweizerische Kulturstiftung Pro Helvetia"},
-        "Service SCPT":    {"Service Surveillance de la correspondance par poste et télécommunication"},
-        "domaine des EPF": {"Domaine des Écoles polytechniques fédérales"},
-    }
-    for k, v in _MANUAL.items():
-        result.setdefault(k, set()).update(v)
+    # DEPARTMENTS has a different structure ([abbrev, abbrev, fullname, fullname])
+    # so the pairs are added explicitly.
+    for abbrev, fullname in [
+        ("VBS",   "Eidgenössische Departement für Verteidigung, Bevölkerungsschutz und Sport"),
+        ("EDA",   "Eidgenössische Departement für auswärtige Angelegenheiten"),
+        ("UVEK",  "Eidgenössische Departement für Umwelt, Verkehr, Energie und Kommunikation"),
+        ("EJPD",  "Eidgenössische Justiz- und Polizeidepartement"),
+        ("EDI",   "Eidgenössische Departement des Innern"),
+        ("EFD",   "Eidgenössische Finanzdepartement"),
+        ("WBF",   "Eidgenössische Departement für Wirtschaft, Bildung und Forschung"),
+        ("DDPS",  "Département fédéral de la défense, de la protection de la population et des sports"),
+        ("DFAE",  "Département fédéral des affaires étrangères"),
+        ("DETEC", "Département fédéral de l'environnement, des transports, de l'énergie et de la communication"),
+        ("DFJP",  "Département fédéral de justice et police"),
+        ("DFI",   "Département fédéral de l'intérieur"),
+        ("DFF",   "Département fédéral des finances"),
+        ("DEFR",  "Département fédéral de l'économie, de la formation et de la recherche"),
+    ]:
+        result.setdefault(abbrev, set()).add(fullname)
 
     return {k: frozenset(v) for k, v in result.items()}
 
