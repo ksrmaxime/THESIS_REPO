@@ -38,7 +38,7 @@ _ALL_PATTERNS: list[tuple[str, re.Pattern]] = []
 for _kw in (
     DE_TERMS + FR_TERMS + DEPARTMENTS + ADMIN_UNITS + INDEPENDENT_AGENCIES + COUNCILLORS
 ):
-    _ALL_PATTERNS.append((_kw, re.compile(re.escape(_kw), re.IGNORECASE)))
+    _ALL_PATTERNS.append((_kw, re.compile(r'\b' + re.escape(_kw) + r'\b', re.IGNORECASE)))
 
 
 def find_matched_keywords(text: str) -> str:
