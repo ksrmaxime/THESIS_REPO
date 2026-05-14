@@ -7,21 +7,38 @@ import pandas as pd
 # ---------------------------------------------------------------------------
 SYSTEM_PROMPT = """\
 You are a media analysis assistant specialised in Swiss public affairs.
-You will receive a newspaper article and a list of institutional entities that were found in that article.
+You will receive a newspaper article and a list of institutional entities mentioned in the article.
 
-For EACH entity, classify how the article treats that entity using exactly one of:
-- CRITICIZED: the entity is the subject of criticism, blame, attack, or negative judgment. Someone in the article — a journalist, a quoted actor, an opinion-piece author, or editorial framing — explicitly states that the entity's action, decision, proposal, or conduct is wrong, harmful, inadequate, unjustified, or counterproductive.
-- PRAISED: the entity is the subject of praise, admiration, or positive endorsement. Someone explicitly commends the entity's action, role, performance, or results.
-- NEUTRAL: the entity is mentioned in a factual, technical, or informational way with no explicit positive or negative judgment (e.g. cited as a source, listed as a stakeholder, referenced in a statistic, or named as a party to an event without evaluation).
+--- STEP 1 — SWISS CONTEXT ---
+Does the article have any connection to Switzerland?
+Count as YES: any reference to a Swiss institution, official, law, city, company, currency, place, or affair — even minor.
+Count as NO: zero connection to Switzerland.
 
-Rules:
-- Classify EVERY entity in the list — do not skip any.
-- Use the exact entity spelling provided in the list as the label.
-- An entity is only CRITICIZED or PRAISED when someone in the article explicitly directs that judgment at that specific entity. Indirect implications are not enough.
-- If the entity appears in multiple passages with mixed tones, choose the dominant tone; if truly balanced, use NEUTRAL.
+--- STEP 2 — ENTITY CRITICISM ---
+(Evaluate only if STEP 1 = YES; otherwise answer NO for every entity.)
 
-OUTPUT FORMAT — respond with EXACTLY one line per keyword and nothing else:
-<KEYWORD>: CRITICIZED or PRAISED or NEUTRAL
+For EACH entity, determine whether the article contains an explicit negative evaluation directed at that entity.
+
+A negative evaluation = any statement where someone criticises, blames, attacks, or negatively judges the entity, its actions, decisions, proposals, management, or results.
+The source can be anyone: a journalist, a quoted actor, a paraphrased source, an opinion-piece author, or the article's own editorial framing.
+
+Only count explicit negative evaluations — do not infer from political context, ideological proximity, policy consequences, or association with a controversial topic alone.
+
+For each entity, answer YES or NO.
+If YES, provide a one-sentence summary covering who criticises the entity and for what reason.
+
+OUTPUT FORMAT — respond with EXACTLY these lines and nothing else:
+
+SWISS_CONTEXT: YES or NO
+
+Then one block per entity:
+
+If NO criticism:
+<ENTITY>: NO
+
+If explicit criticism:
+<ENTITY>: YES
+SUMMARY: <who criticises the entity and for what reason>
 
 Do not add any explanation, preamble, or extra lines.\
 """
@@ -30,13 +47,13 @@ Do not add any explanation, preamble, or extra lines.\
 # User prompt template
 # ---------------------------------------------------------------------------
 USER_TEMPLATE = """\
+Analyse the following newspaper article according to the instructions above.
+
 Article:
 {text}
 
-Keywords found in this article:
+ENTITY to evaluate:
 {keywords}
-
-Classify each keyword:
 """
 
 

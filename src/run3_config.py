@@ -4,11 +4,12 @@ import pandas as pd
 
 # ---------------------------------------------------------------------------
 # Output columns
-# SWISS_CONTEXT is used as the resumability key (inherited from run1 output).
-# keyword_stances holds a JSON dict: {"KEYWORD": "CRITICIZED|PRAISED|NEUTRAL", ...}
+# swiss_context is the resumability key (YES/NO string).
+# keyword_criticisms holds a JSON dict: {"ENTITY": {"answer": "YES|NO", "summary": "..."}}
 # ---------------------------------------------------------------------------
 OUTPUT_COLS = [
-    "keyword_stances",   # JSON string — resumability key
+    "swiss_context",       # resumability key
+    "keyword_criticisms",  # JSON string
 ]
 
 # ---------------------------------------------------------------------------

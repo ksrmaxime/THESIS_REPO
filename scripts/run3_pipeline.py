@@ -16,49 +16,64 @@ from src.runner import run_llm_dataframe, RunConfig
 from src.run3_prompts import SYSTEM_PROMPT, build_user_prompt
 from src.run3_config import build_mask, OUTPUT_COLS
 
-# ---------------------------------------------------------------------------
-# Valid stance values
-# ---------------------------------------------------------------------------
-_VALID_STANCES = {"CRITICIZED", "PRAISED", "NEUTRAL"}
-
-
 def parse_output(raw: str) -> dict:
     """
-    Parse LLM response into {"keyword_stances": '{"KW": "CRITICIZED", ...}'}.
+    Parse LLM response into:
+      - swiss_context:      "YES" or "NO"
+      - keyword_criticisms: JSON string {"ENTITY": {"answer": "YES|NO", "summary": "..."}}
 
-    Expected format (one line per keyword):
-        BAG: CRITICIZED
-        OFSP: NEUTRAL
-        SECO: PRAISED
+    Expected format:
+        SWISS_CONTEXT: YES
+
+        BAG: YES
+        SUMMARY: The SP party criticises BAG for mismanaging vaccine procurement.
+        OFSP: NO
+        SECO: YES
+        SUMMARY: Trade unions criticise SECO for its proposed labour reform.
     """
     empty = {col: pd.NA for col in OUTPUT_COLS}
     if not raw:
         return empty
 
-    stances: dict[str, str] = {}
+    swiss_context: str | None = None
+    criticisms: dict[str, dict] = {}
+    current_kw: str | None = None
+
     for line in str(raw).strip().splitlines():
         line = line.strip()
         if not line:
             continue
-        # Remove optional leading bullet/dash
         line = re.sub(r"^[-•*]\s*", "", line)
         colon_idx = line.find(":")
         if colon_idx == -1:
             continue
-        kw = line[:colon_idx].strip()
-        stance = line[colon_idx + 1:].strip().upper()
-        # Accept truncated variants too (e.g. "CRITICIZ" → "CRITICIZED")
-        for valid in _VALID_STANCES:
-            if valid.startswith(stance) or stance.startswith(valid[:5]):
-                stance = valid
-                break
-        if kw and stance in _VALID_STANCES:
-            stances[kw] = stance
 
-    if not stances:
+        key   = line[:colon_idx].strip()
+        value = line[colon_idx + 1:].strip()
+
+        if key.upper() == "SWISS_CONTEXT":
+            swiss_context = "YES" if value.upper().startswith("YES") else "NO"
+        elif key.upper() == "SUMMARY":
+            if current_kw is not None:
+                criticisms[current_kw]["summary"] = value
+        else:
+            answer = value.upper()
+            if answer.startswith("YES"):
+                answer = "YES"
+            elif answer.startswith("NO"):
+                answer = "NO"
+            else:
+                continue
+            current_kw = key
+            criticisms[current_kw] = {"answer": answer}
+
+    if swiss_context is None and not criticisms:
         return empty
 
-    return {"keyword_stances": json.dumps(stances, ensure_ascii=False)}
+    return {
+        "swiss_context":      swiss_context if swiss_context is not None else pd.NA,
+        "keyword_criticisms": json.dumps(criticisms, ensure_ascii=False) if criticisms else pd.NA,
+    }
 
 
 def main() -> int:
@@ -161,7 +176,7 @@ def main() -> int:
         build_prompt_fn=lambda row, col: build_user_prompt(row, col),
         parse_fn=parse_output,
         output_cols=OUTPUT_COLS,
-        skip_if_already_filled=OUTPUT_COLS[0],   # resume on keyword_stances
+        skip_if_already_filled=OUTPUT_COLS[0],   # resume on swiss_context
         checkpoint_path=checkpoint_path,
         checkpoint_every=50,
     )

@@ -17,6 +17,7 @@ data/external/
 
 # Output (generated artifacts)
 output/
+input/
 
 # Jupyter
 .ipynb_checkpoints/
