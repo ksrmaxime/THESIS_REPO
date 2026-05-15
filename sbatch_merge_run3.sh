@@ -84,7 +84,7 @@ sort_col = "article_id" if "article_id" in merged.columns else merged.columns[0]
 merged = merged.sort_values(sort_col).reset_index(drop=True)
 
 # ---------------------------------------------------------------------------
-# 2. Save compact version (with JSON keyword_stances column)
+# 2. Save compact version (with JSON keyword_criticisms column)
 # ---------------------------------------------------------------------------
 merged.to_parquet(merged_parquet, index=False)
 merged.to_csv(merged_csv, index=False, encoding="utf-8-sig")
@@ -94,14 +94,15 @@ print(f"[merge] Sorted by: {sort_col}")
 print(f"[merge] Compact → {merged_parquet}")
 print(f"[merge] Compact → {merged_csv}")
 
-filled = merged["keyword_stances"].notna().sum()
-print(f"[merge] keyword_stances rempli: {filled:,} / {len(merged):,}")
+filled = merged["keyword_criticisms"].notna().sum()
+print(f"[merge] keyword_criticisms rempli: {filled:,} / {len(merged):,}")
 
 # ---------------------------------------------------------------------------
-# 3. Expand keyword_stances JSON into individual KW_<keyword> columns
-#    Values: CRITICIZED | PRAISED | NEUTRAL | NaN (keyword absent from article)
+# 3. Expand keyword_criticisms JSON into individual KW_<keyword>_answer /
+#    KW_<keyword>_summary columns.
+#    Format: {"ENTITY": {"answer": "YES|NO", "summary": "..."}}
 # ---------------------------------------------------------------------------
-def parse_stances(raw) -> dict:
+def parse_criticisms(raw) -> dict:
     if pd.isna(raw) or not str(raw).strip():
         return {}
     try:
@@ -109,38 +110,39 @@ def parse_stances(raw) -> dict:
     except json.JSONDecodeError:
         return {}
 
-all_stances = merged["keyword_stances"].apply(parse_stances)
+all_criticisms = merged["keyword_criticisms"].apply(parse_criticisms)
 
 # Collect the full keyword universe across all articles
-all_keywords = sorted({kw for stances in all_stances for kw in stances})
+all_keywords = sorted({kw for d in all_criticisms for kw in d})
 print(f"[merge] {len(all_keywords)} keywords distincts trouvés dans les données")
 
-# Build wide DataFrame: one column per keyword, prefixed with KW_
+# Build wide DataFrame: two columns per keyword (answer + summary)
 wide_cols = {}
 for kw in all_keywords:
-    col_name = f"KW_{kw}"
-    wide_cols[col_name] = all_stances.apply(lambda d, k=kw: d.get(k, pd.NA))
+    wide_cols[f"KW_{kw}_answer"]  = all_criticisms.apply(lambda d, k=kw: d[k].get("answer",  pd.NA) if k in d else pd.NA)
+    wide_cols[f"KW_{kw}_summary"] = all_criticisms.apply(lambda d, k=kw: d[k].get("summary", pd.NA) if k in d else pd.NA)
 
 wide_df = pd.DataFrame(wide_cols, index=merged.index)
 
-# Concatenate with original columns (drop the JSON column to avoid duplication)
+# Concatenate with original columns
 merged_wide = pd.concat([merged, wide_df], axis=1)
 merged_wide.to_csv(merged_wide_csv, index=False, encoding="utf-8-sig")
 
 print(f"[merge] Wide    → {merged_wide_csv}")
-print(f"[merge] Colonnes wide: {list(wide_cols.keys())[:10]} {'...' if len(all_keywords) > 10 else ''}")
+print(f"[merge] Colonnes wide: {list(wide_cols.keys())[:10]} {'...' if len(wide_cols) > 10 else ''}")
 
-# Summary of stances distribution
-stance_counts = {"CRITICIZED": 0, "PRAISED": 0, "NEUTRAL": 0}
-for d in all_stances:
+# Summary of answer distribution
+answer_counts = {"YES": 0, "NO": 0}
+for d in all_criticisms:
     for v in d.values():
-        if v in stance_counts:
-            stance_counts[v] += 1
-total_classifications = sum(stance_counts.values())
-print(f"\n[merge] Distribution des stances ({total_classifications:,} classifications):")
-for stance, count in stance_counts.items():
+        ans = v.get("answer", "") if isinstance(v, dict) else ""
+        if ans in answer_counts:
+            answer_counts[ans] += 1
+total_classifications = sum(answer_counts.values())
+print(f"\n[merge] Distribution des réponses ({total_classifications:,} classifications):")
+for ans, count in answer_counts.items():
     pct = 100 * count / total_classifications if total_classifications else 0
-    print(f"  {stance}: {count:,} ({pct:.1f}%)")
+    print(f"  {ans}: {count:,} ({pct:.1f}%)")
 
 PYEOF
 
