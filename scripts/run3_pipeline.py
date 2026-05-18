@@ -1,7 +1,6 @@
 import json
 import math
 import os
-import re
 import sys
 import argparse
 from pathlib import Path
@@ -16,64 +15,40 @@ from src.runner import run_llm_dataframe, RunConfig
 from src.run3_prompts import SYSTEM_PROMPT, build_user_prompt
 from src.run3_config import build_mask, OUTPUT_COLS
 
+
+def explode_by_keyword(df: pd.DataFrame, mask: pd.Series) -> pd.DataFrame:
+    """Create one row per (article, keyword) for rows matching the mask."""
+    rows = df[mask].copy()
+    rows["__orig_idx__"] = rows.index
+    rows["keyword"] = rows["matched_keywords"].str.split("|")
+    exploded = rows.explode("keyword").copy()
+    exploded["keyword"] = exploded["keyword"].str.strip()
+    exploded = exploded[exploded["keyword"] != ""].reset_index(drop=True)
+    return exploded
+
+
 def parse_output(raw: str) -> dict:
-    """
-    Parse LLM response into:
-      - swiss_context:      "YES" or "NO"
-      - keyword_criticisms: JSON string {"ENTITY": {"answer": "YES|NO", "summary": "..."}}
-
-    Expected format:
-        SWISS_CONTEXT: YES
-
-        BAG: YES
-        SUMMARY: The SP party criticises BAG for mismanaging vaccine procurement.
-        OFSP: NO
-        SECO: YES
-        SUMMARY: Trade unions criticise SECO for its proposed labour reform.
-    """
-    empty = {col: pd.NA for col in OUTPUT_COLS}
     if not raw:
-        return empty
+        return {"keyword_answer": pd.NA}
+    answer = raw.strip().upper()
+    if answer.startswith("YES"):
+        return {"keyword_answer": "YES"}
+    elif answer.startswith("NO"):
+        return {"keyword_answer": "NO"}
+    return {"keyword_answer": pd.NA}
 
-    swiss_context: str | None = None
-    criticisms: dict[str, dict] = {}
-    current_kw: str | None = None
 
-    for line in str(raw).strip().splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        line = re.sub(r"^[-•*]\s*", "", line)
-        colon_idx = line.find(":")
-        if colon_idx == -1:
-            continue
-
-        key   = line[:colon_idx].strip()
-        value = line[colon_idx + 1:].strip()
-
-        if key.upper() == "SWISS_CONTEXT":
-            swiss_context = "YES" if value.upper().startswith("YES") else "NO"
-        elif key.upper() == "SUMMARY":
-            if current_kw is not None:
-                criticisms[current_kw]["summary"] = value
-        else:
-            answer = value.upper()
-            if answer.startswith("YES"):
-                answer = "YES"
-            elif answer.startswith("NO"):
-                answer = "NO"
-            else:
-                continue
-            current_kw = key
-            criticisms[current_kw] = {"answer": answer}
-
-    if swiss_context is None and not criticisms:
-        return empty
-
-    return {
-        "swiss_context":      swiss_context if swiss_context is not None else pd.NA,
-        "keyword_criticisms": json.dumps(criticisms, ensure_ascii=False) if criticisms else pd.NA,
-    }
+def aggregate_results(exploded: pd.DataFrame) -> dict:
+    """Return {orig_idx: json_string} with keyword -> YES/NO per article."""
+    result = {}
+    for orig_idx, group in exploded.groupby("__orig_idx__"):
+        d = {}
+        for _, row in group.iterrows():
+            kw = str(row["keyword"])
+            ans = row["keyword_answer"]
+            d[kw] = None if pd.isna(ans) else str(ans)
+        result[orig_idx] = json.dumps(d, ensure_ascii=False)
+    return result
 
 
 def main() -> int:
@@ -114,39 +89,52 @@ def main() -> int:
     if num_tasks is None and os.environ.get("SLURM_ARRAY_TASK_COUNT"):
         num_tasks = int(os.environ["SLURM_ARRAY_TASK_COUNT"])
 
-    # Checkpoint is task-scoped so it survives re-submissions
-    checkpoint_path = None
-    if task_id is not None:
-        checkpoint_path = args.output_base + f"_task{task_id}_checkpoint.parquet"
+    # --- Load original data ---
+    df = (pd.read_parquet(args.input)
+          if args.input.endswith(".parquet")
+          else pd.read_csv(args.input, low_memory=False))
 
-    # Load or resume from checkpoint
-    if checkpoint_path and Path(checkpoint_path).exists():
-        print(f"[resume] Loading checkpoint: {checkpoint_path}", flush=True)
-        df = pd.read_parquet(checkpoint_path)
-    else:
-        df = (pd.read_parquet(args.input)
-              if args.input.endswith(".parquet")
-              else pd.read_csv(args.input, low_memory=False))
+    if args.n_rows > 0:
+        df = df.head(args.n_rows).copy()
+        print(f"[n_rows] Subsetting to first {args.n_rows} rows")
 
-        if args.n_rows > 0:
-            df = df.head(args.n_rows).copy()
-            print(f"[n_rows] Subsetting to first {args.n_rows} rows")
-
-        if task_id is not None and num_tasks is not None:
-            chunk_size = math.ceil(len(df) / num_tasks)
-            start = task_id * chunk_size
-            end   = min(start + chunk_size, len(df))
-            print(
-                f"[pipeline] Array task {task_id}/{num_tasks} — "
-                f"rows {start}:{end} ({end - start} rows)",
-                flush=True,
-            )
-            df = df.iloc[start:end].copy()
+    if task_id is not None and num_tasks is not None:
+        chunk_size = math.ceil(len(df) / num_tasks)
+        start = task_id * chunk_size
+        end   = min(start + chunk_size, len(df))
+        print(
+            f"[pipeline] Array task {task_id}/{num_tasks} — "
+            f"rows {start}:{end} ({end - start} rows)",
+            flush=True,
+        )
+        df = df.iloc[start:end].copy()
 
     for col in OUTPUT_COLS:
         if col not in df.columns:
             df[col] = pd.Series(pd.NA, index=df.index, dtype="string")
 
+    mask = build_mask(df, text_col=args.text_col)
+
+    # --- Exploded checkpoint ---
+    if task_id is not None:
+        exploded_checkpoint = args.output_base + f"_task{task_id}_exploded_checkpoint.parquet"
+    else:
+        exploded_checkpoint = args.output_base + "_exploded_checkpoint.parquet"
+
+    # --- Load or create exploded df ---
+    if Path(exploded_checkpoint).exists():
+        print(f"[resume] Loading exploded checkpoint: {exploded_checkpoint}", flush=True)
+        exploded = pd.read_parquet(exploded_checkpoint)
+    else:
+        exploded = explode_by_keyword(df, mask)
+        exploded["keyword_answer"] = pd.Series(pd.NA, index=exploded.index, dtype="string")
+
+    print(
+        f"[pipeline] {int(mask.sum()):,} articles → {len(exploded):,} (article, keyword) pairs",
+        flush=True,
+    )
+
+    # --- LLM client ---
     client = TransformersClient(
         LLMConfig(
             model_path=args.model_path,
@@ -157,7 +145,7 @@ def main() -> int:
     )
 
     run_cfg = RunConfig(
-        id_col="article_id" if "article_id" in df.columns else "__index__",
+        id_col="__index__",
         text_col=args.text_col,
         batch_size=args.batch_size,
         temperature=args.temperature,
@@ -165,22 +153,25 @@ def main() -> int:
         max_input_tokens=args.max_input_tokens,
     )
 
-    mask = build_mask(df, text_col=args.text_col)
-
-    out = run_llm_dataframe(
-        df=df,
+    exploded = run_llm_dataframe(
+        df=exploded,
         cfg=run_cfg,
         client=client,
         system_prompt=SYSTEM_PROMPT,
-        select_mask_fn=lambda df_: mask,
+        select_mask_fn=lambda df_: None,
         build_prompt_fn=lambda row, col: build_user_prompt(row, col),
         parse_fn=parse_output,
-        output_cols=OUTPUT_COLS,
-        skip_if_already_filled=OUTPUT_COLS[0],   # resume on swiss_context
-        checkpoint_path=checkpoint_path,
+        output_cols=["keyword_answer"],
+        skip_if_already_filled="keyword_answer",
+        checkpoint_path=exploded_checkpoint,
         checkpoint_every=50,
     )
 
+    # --- Aggregate back to original df ---
+    for orig_idx, json_str in aggregate_results(exploded).items():
+        df.at[orig_idx, "keyword_criticisms"] = json_str
+
+    # --- Save ---
     job_id = (
         os.environ.get("SLURM_ARRAY_JOB_ID")
         or os.environ.get("SLURM_JOB_ID")
@@ -196,14 +187,14 @@ def main() -> int:
     csv_path     = base + ".csv"
 
     Path(parquet_path).parent.mkdir(parents=True, exist_ok=True)
-    out.to_parquet(parquet_path, index=False)
-    out.to_csv(csv_path, index=False)
+    df.to_parquet(parquet_path, index=False)
+    df.to_csv(csv_path, index=False)
 
-    print(f"Saved: {parquet_path} | Processed: {int(mask.sum()):,} rows")
+    print(f"Saved: {parquet_path} | Processed: {int(mask.sum()):,} articles")
 
-    if checkpoint_path and Path(checkpoint_path).exists():
-        Path(checkpoint_path).unlink()
-        print(f"[checkpoint] Deleted {checkpoint_path}")
+    if Path(exploded_checkpoint).exists():
+        Path(exploded_checkpoint).unlink()
+        print(f"[checkpoint] Deleted {exploded_checkpoint}")
 
     return 0
 

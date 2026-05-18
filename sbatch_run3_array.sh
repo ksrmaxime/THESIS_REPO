@@ -9,7 +9,7 @@
 #SBATCH --error=logs/run3_array_%A_%a.err
 #SBATCH --mail-user=maxime.kaiser@unil.ch
 #SBATCH --mail-type=END,FAIL
-#SBATCH --array=0-7   # 8 GPUs en parallèle
+#SBATCH --array=0-8   # 8 GPUs en parallèle
 
 set -euo pipefail
 
@@ -24,6 +24,7 @@ WORKDIR=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO
 INPUT=${WORKDIR}/data/input/swissdox_2025_tagged.csv
 OUTPUT_BASE=${WORKDIR}/data/output/run3
 TEXT_COL=text
+N_ROWS=1000        # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
 
 # Model
 MODEL_PATH=/reference/LLM/swiss-ai/Apertus-8B-Instruct-2509
@@ -32,7 +33,7 @@ BACKEND=transformers
 
 # Inference
 BATCH_SIZE=2
-MAX_NEW_TOKENS=512    # jusqu'à ~20 keywords × ~25 tokens par ligne
+MAX_NEW_TOKENS=5      # réponse = YES ou NO = 1 token
 MAX_INPUT_TOKENS=16384
 TEMPERATURE=0.0
 
@@ -67,6 +68,7 @@ python scripts/run3_pipeline.py \
   --input             "$INPUT" \
   --output_base       "$OUTPUT_BASE" \
   --text_col          "$TEXT_COL" \
+  --n_rows            "$N_ROWS" \
   --model_path        "$MODEL_PATH" \
   --dtype             "$DTYPE" \
   --backend           "$BACKEND" \

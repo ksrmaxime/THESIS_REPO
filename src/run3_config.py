@@ -2,19 +2,10 @@
 from __future__ import annotations
 import pandas as pd
 
-# ---------------------------------------------------------------------------
-# Output columns
-# swiss_context is the resumability key (YES/NO string).
-# keyword_criticisms holds a JSON dict: {"ENTITY": {"answer": "YES|NO", "summary": "..."}}
-# ---------------------------------------------------------------------------
-OUTPUT_COLS = [
-    "swiss_context",       # resumability key
-    "keyword_criticisms",  # JSON string
-]
+# keyword_criticisms holds a JSON dict: {"keyword": "YES" | "NO"}
+OUTPUT_COLS = ["keyword_criticisms"]
 
-# ---------------------------------------------------------------------------
-# Row selection mask
-# ---------------------------------------------------------------------------
+
 def build_mask(df: pd.DataFrame, *, text_col: str) -> pd.Series:
     """Return rows that have both article text AND at least one matched keyword."""
     has_text = df[text_col].notna() & (df[text_col].str.strip() != "")
