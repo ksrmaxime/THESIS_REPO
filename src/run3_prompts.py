@@ -6,64 +6,64 @@ import pandas as pd
 # System prompt
 # ---------------------------------------------------------------------------
 SYSTEM_PROMPT = """\
-You are a media analysis assistant specialised in Swiss public affairs.
-You will receive a newspaper article and a list of institutional entities mentioned in the article.
+You are an analyst for a Swiss media research project on public administration.
+Your task is to read newspaper articles and identify all negative arguments
+made against Swiss public administration entities.
 
---- STEP 1 — SWISS CONTEXT ---
-Does the article have any connection to Switzerland?
-Count as YES: any reference to a Swiss institution, official, law, city, company, currency, place, or affair — even minor.
-Count as NO: zero connection to Switzerland.
+The article was retrieved because it contains one or more keywords referring
+to specific Swiss public administration entities. For each keyword, identify
+every negative argument made against that entity in the article — regardless
+of who voices it.
 
---- STEP 2 — ENTITY CRITICISM ---
-(Evaluate only if STEP 1 = YES; otherwise answer NO for every entity.)
+For each negative argument found, describe:
+1. What is argued negatively against the entity
+2. Who voices or carries this argument in the article,
+   using the exact words of the text (a named person, a group,
+   the journalist, or no identifiable source)
 
-For EACH entity, determine whether the article contains an explicit negative evaluation directed at that entity.
+IMPORTANT:
+- Stay strictly faithful to the text. Do not interpret or classify.
+- If no negative argument is found for a keyword, say so explicitly.
+- Some keywords may refer to the same entity — treat them together.
 
-A negative evaluation = any statement where someone criticises, blames, attacks, or negatively judges the entity, its actions, decisions, proposals, management, or results.
-The source can be anyone: a journalist, a quoted actor, a paraphrased source, an opinion-piece author, or the article's own editorial framing.
+SWISS_RELEVANT: some generic keywords (e.g. "bureaucratie", "fonctionnaires")
+may appear in articles unrelated to Switzerland. If the article does not
+concern Switzerland or the Swiss federal administration, output only:
+SWISS_RELEVANT: NO
 
-Only count explicit negative evaluations — do not infer from political context, ideological proximity, policy consequences, or association with a controversial topic alone.
+OUTPUT FORMAT — follow exactly, no additional text:
 
-For each entity, answer YES or NO.
-If YES, provide a one-sentence summary covering who criticises the entity and for what reason.
+SWISS_RELEVANT: [YES | NO]
+If NO: stop here.
 
-OUTPUT FORMAT — respond with EXACTLY these lines and nothing else:
+If YES:
 
-SWISS_CONTEXT: YES or NO
+ENTITY_[N]: [keyword or entity name as it appears in the article]
+  ARGUMENT_[N.M]: [1-2 sentences describing the negative argument
+                   using the words of the article]
+  SOURCE_[N.M]: [who voices this argument as mentioned in the text,
+                 or JOURNALIST_VOICE, or UNCLEAR]
 
-Then one block per entity:
-
-If NO criticism:
-<ENTITY>: NO
-
-If explicit criticism:
-<ENTITY>: YES
-SUMMARY: <who criticises the entity and for what reason>
-
-Do not add any explanation, preamble, or extra lines.\
+ARGUMENT_COUNT: [total number of negative arguments identified]
+If none found: ARGUMENT_COUNT: 0\
 """
 
 # ---------------------------------------------------------------------------
 # User prompt template
 # ---------------------------------------------------------------------------
 USER_TEMPLATE = """\
-Analyse the following newspaper article according to the instructions above.
+KEYWORDS (entities to focus on): {keywords}
 
-Article:
-{text}
-
-ENTITY to evaluate:
-{keywords}
+ARTICLE:
+{article_text}
 """
 
 
 def build_user_prompt(row: pd.Series, text_col: str) -> str:
-    txt = "" if pd.isna(row[text_col]) else str(row[text_col]).strip()
+    article_text = "" if pd.isna(row[text_col]) else str(row[text_col]).strip()
 
     raw_kws = row.get("matched_keywords", "")
     raw_kws = "" if pd.isna(raw_kws) else str(raw_kws).strip()
-    keywords_formatted = "\n".join(
-        f"- {kw.strip()}" for kw in raw_kws.split("|") if kw.strip()
-    )
+    keywords_formatted = ", ".join(kw.strip() for kw in raw_kws.split("|") if kw.strip())
 
-    return USER_TEMPLATE.format(text=txt, keywords=keywords_formatted)
+    return USER_TEMPLATE.format(article_text=article_text, keywords=keywords_formatted)
