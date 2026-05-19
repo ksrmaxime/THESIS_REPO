@@ -119,8 +119,8 @@ print(f"[merge] {len(all_keywords)} keywords distincts trouvés dans les donnée
 # Build wide DataFrame: two columns per keyword (answer + summary)
 wide_cols = {}
 for kw in all_keywords:
-    wide_cols[f"KW_{kw}_answer"]  = all_criticisms.apply(lambda d, k=kw: d[k].get("answer",  pd.NA) if k in d else pd.NA)
-    wide_cols[f"KW_{kw}_summary"] = all_criticisms.apply(lambda d, k=kw: d[k].get("summary", pd.NA) if k in d else pd.NA)
+    wide_cols[f"KW_{kw}_answer"]  = all_criticisms.apply(lambda d, k=kw: d[k].get("answer",  pd.NA) if k in d and isinstance(d[k], dict) else pd.NA)
+    wide_cols[f"KW_{kw}_summary"] = all_criticisms.apply(lambda d, k=kw: d[k].get("summary", pd.NA) if k in d and isinstance(d[k], dict) else pd.NA)
 
 wide_df = pd.DataFrame(wide_cols, index=merged.index)
 
