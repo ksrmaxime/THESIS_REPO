@@ -1,10 +1,10 @@
 """
 tag_keywords.py – Add a `matched_keywords` column to Swissdox output files.
 
-Scans the `text` column of each article against every term in the original
-Swissdox query (DE_TERMS, FR_TERMS, DEPARTMENTS, ADMIN_UNITS,
-INDEPENDENT_AGENCIES, COUNCILLORS) and writes matched terms as a
-pipe-separated string in a new `matched_keywords` column.
+Scans the `text` column of each article against every term in the active
+Swissdox query (DEPARTMENTS, ADMIN_UNITS, INDEPENDENT_AGENCIES, COUNCILLORS)
+and writes matched terms as a pipe-separated string in a new
+`matched_keywords` column.
 
 Keywords are matched with word boundaries (\b) and filtered by the article's
 `language` column ("de" / "fr") so that language-specific abbreviations (e.g.
@@ -33,9 +33,7 @@ sys.path.append(str(ROOT))
 from src.download_src import (
     ADMIN_UNITS,
     COUNCILLORS,
-    DE_TERMS,
     DEPARTMENTS,
-    FR_TERMS,
     INDEPENDENT_AGENCIES,
 )
 
@@ -172,12 +170,6 @@ def _pat(kw: str) -> re.Pattern:
 
 
 _ALL_PATTERNS: list[tuple[str, re.Pattern, str]] = []
-
-for _kw in DE_TERMS:
-    _ALL_PATTERNS.append((_kw, _pat(_kw), "de"))
-
-for _kw in FR_TERMS:
-    _ALL_PATTERNS.append((_kw, _pat(_kw), "fr"))
 
 for _kw in COUNCILLORS:
     _ALL_PATTERNS.append((_kw, _pat(_kw), "both"))
