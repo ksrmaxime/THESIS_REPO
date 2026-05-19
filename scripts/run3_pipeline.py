@@ -1,4 +1,3 @@
-import json
 import math
 import os
 import sys
@@ -13,7 +12,7 @@ import pandas as pd
 from src.client import TransformersClient, LLMConfig
 from src.runner import run_llm_dataframe, RunConfig
 from src.run3_prompts import SYSTEM_PROMPT, build_user_prompt
-from src.run3_config import build_mask, OUTPUT_COLS
+from src.run3_config import build_mask
 
 
 def explode_by_keyword(df: pd.DataFrame, mask: pd.Series) -> pd.DataFrame:
@@ -36,19 +35,6 @@ def parse_output(raw: str) -> dict:
     elif answer.startswith("NO"):
         return {"keyword_answer": "NO"}
     return {"keyword_answer": pd.NA}
-
-
-def aggregate_results(exploded: pd.DataFrame) -> dict:
-    """Return {orig_idx: json_string} with keyword -> YES/NO per article."""
-    result = {}
-    for orig_idx, group in exploded.groupby("__orig_idx__"):
-        d = {}
-        for _, row in group.iterrows():
-            kw = str(row["keyword"])
-            ans = row["keyword_answer"]
-            d[kw] = None if pd.isna(ans) else str(ans)
-        result[orig_idx] = json.dumps(d, ensure_ascii=False)
-    return result
 
 
 def main() -> int:
@@ -109,10 +95,6 @@ def main() -> int:
         )
         df = df.iloc[start:end].copy()
 
-    for col in OUTPUT_COLS:
-        if col not in df.columns:
-            df[col] = pd.Series(pd.NA, index=df.index, dtype="string")
-
     mask = build_mask(df, text_col=args.text_col)
 
     # --- Exploded checkpoint ---
@@ -167,11 +149,7 @@ def main() -> int:
         checkpoint_every=50,
     )
 
-    # --- Aggregate back to original df ---
-    for orig_idx, json_str in aggregate_results(exploded).items():
-        df.at[orig_idx, "keyword_criticisms"] = json_str
-
-    # --- Save ---
+    # --- Save keyword-level output (one row per article+keyword) ---
     job_id = (
         os.environ.get("SLURM_ARRAY_JOB_ID")
         or os.environ.get("SLURM_JOB_ID")
@@ -186,11 +164,16 @@ def main() -> int:
     parquet_path = base + ".parquet"
     csv_path     = base + ".csv"
 
-    Path(parquet_path).parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(parquet_path, index=False)
-    df.to_csv(csv_path, index=False)
+    output = exploded.drop(columns=["__orig_idx__"], errors="ignore")
 
-    print(f"Saved: {parquet_path} | Processed: {int(mask.sum()):,} articles")
+    Path(parquet_path).parent.mkdir(parents=True, exist_ok=True)
+    output.to_parquet(parquet_path, index=False)
+    output.to_csv(csv_path, index=False)
+
+    print(
+        f"Saved: {parquet_path} | "
+        f"{int(mask.sum()):,} articles → {len(output):,} (article, keyword) rows"
+    )
 
     if Path(exploded_checkpoint).exists():
         Path(exploded_checkpoint).unlink()

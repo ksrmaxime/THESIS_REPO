@@ -2,9 +2,6 @@
 from __future__ import annotations
 import pandas as pd
 
-# keyword_criticisms holds a JSON dict: {"keyword": "YES" | "NO"}
-OUTPUT_COLS = ["keyword_criticisms"]
-
 
 def build_mask(df: pd.DataFrame, *, text_col: str) -> pd.Series:
     """Return rows that have both article text AND at least one matched keyword."""
