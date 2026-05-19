@@ -5,7 +5,7 @@ import pandas as pd
 SYSTEM_PROMPT = ""
 
 USER_TEMPLATE = """\
-You will receive an article to analyze. Your task is to tell if "{keyword}" is being criticized in this article? Answer ONLY by YES or NO nothing else
+You will receive an article to analyze. Your task is to tell if "{keyword}" is being criticized in this article, for who it is or what it did? Answer ONLY by YES or NO nothing else
 
 ARTICLE:
 {article_text}\

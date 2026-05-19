@@ -21,7 +21,7 @@ WORKDIR=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO
 
 # I/O
 # Input = fichier tagué produit par sbatch_tag_keywords.sh
-INPUT=${WORKDIR}/data/input/swissdox_2025_tagged.csv
+INPUT=${WORKDIR}/data/input/swissdox_2025_20260518_184702_tagged.csv
 OUTPUT_BASE=${WORKDIR}/data/output/run3
 TEXT_COL=text
 N_ROWS=1000        # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
