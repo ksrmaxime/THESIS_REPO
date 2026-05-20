@@ -85,10 +85,10 @@ class TransformersClient:
 
         prompts = []
         for up in user_prompts:
-            msgs = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": up},
-            ]
+            msgs = []
+            if system_prompt:
+                msgs.append({"role": "system", "content": system_prompt})
+            msgs.append({"role": "user", "content": up})
             prompts.append(
                 self.tok.apply_chat_template(
                     msgs,
