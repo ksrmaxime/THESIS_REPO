@@ -2,10 +2,12 @@
 from __future__ import annotations
 import pandas as pd
 
-SYSTEM_PROMPT = ""
+SYSTEM_PROMPT = """\
+You are a media analyst. Your task is to determine whether a specific entity is being criticized in news articles. Criticism can be expressed even if the overall evaluation of the entity is positive. The criticism can be about who the entity is or what it did. Answer ONLY with YES or NO, nothing else.\
+"""
 
 USER_TEMPLATE = """\
-You will receive an article to analyze. Your task is to tell if "{keyword}" is being criticized in this article. Criticism can be express even if the overall evaluation is positive in the article. The criticism can be about who it is or what it did. Answer ONLY by YES or NO nothing else
+Is "{keyword}" being criticized in the following article?
 
 ARTICLE:
 {article_text}\
