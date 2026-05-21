@@ -24,7 +24,7 @@ WORKDIR=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO
 INPUT=${WORKDIR}/data/input/swissdox_2025_20260518_184702_tagged.csv
 OUTPUT_BASE=${WORKDIR}/data/output/run3
 TEXT_COL=text
-N_ROWS=1000        # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
+N_ROWS=0        # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
 
 # Model
 MODEL_PATH=/reference/LLM/swiss-ai/Apertus-8B-Instruct-2509
