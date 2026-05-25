@@ -69,32 +69,31 @@ def main() -> int:
         df = df.head(args.n_rows).copy()
         print(f"[n_rows] Subsetting to first {args.n_rows} rows")
 
-    # --- Filter to YES rows only before chunking ---
-    mask = build_mask(df, text_col=args.text_col)
-    yes_df = df[mask].copy().reset_index(drop=True)
-    print(f"[pipeline] {len(df):,} total rows → {len(yes_df):,} rows with keyword_answer=YES")
-
+    # --- Chunk across tasks on ALL rows (YES + NO), then report YES count in chunk ---
     if task_id is not None and num_tasks is not None:
-        chunk_size = math.ceil(len(yes_df) / num_tasks)
+        chunk_size = math.ceil(len(df) / num_tasks)
         start = task_id * chunk_size
-        end   = min(start + chunk_size, len(yes_df))
+        end   = min(start + chunk_size, len(df))
         print(
             f"[pipeline] Array task {task_id}/{num_tasks} — "
             f"rows {start}:{end} ({end - start} rows)",
             flush=True,
         )
-        yes_df = yes_df.iloc[start:end].copy()
+        df = df.iloc[start:end].copy()
+
+    yes_count = int(build_mask(df, text_col=args.text_col).sum())
+    print(f"[pipeline] {len(df):,} rows in chunk → {yes_count:,} with keyword_answer=YES (will be sent to LLM)")
 
     # --- Checkpoint path ---
     if task_id is not None:
-        checkpoint_path = args.output_base + f"_task{task_id}_exploded_checkpoint.parquet"
+        checkpoint_path = args.output_base + f"_task{task_id}_checkpoint.parquet"
     else:
-        checkpoint_path = args.output_base + "_exploded_checkpoint.parquet"
+        checkpoint_path = args.output_base + "_checkpoint.parquet"
 
     # --- Resume from checkpoint if it exists ---
     if Path(checkpoint_path).exists():
         print(f"[resume] Loading checkpoint: {checkpoint_path}", flush=True)
-        yes_df = pd.read_parquet(checkpoint_path)
+        df = pd.read_parquet(checkpoint_path)
 
     # --- LLM client ---
     client = TransformersClient(
@@ -115,12 +114,13 @@ def main() -> int:
         max_input_tokens=args.max_input_tokens,
     )
 
-    yes_df = run_llm_dataframe(
-        df=yes_df,
+    # --- Run LLM on YES rows only; NO rows keep critic_answer=NA ---
+    df = run_llm_dataframe(
+        df=df,
         cfg=run_cfg,
         client=client,
         system_prompt=SYSTEM_PROMPT,
-        select_mask_fn=lambda df_: None,
+        select_mask_fn=lambda df_: build_mask(df_, text_col=args.text_col),
         build_prompt_fn=lambda row, col: build_user_prompt(row, col),
         parse_fn=parse_output,
         output_cols=["critic_answer"],
@@ -129,7 +129,7 @@ def main() -> int:
         checkpoint_every=50,
     )
 
-    # --- Save output (one row per article+keyword, YES only) ---
+    # --- Save ALL rows (YES with critic_answer filled, NO with critic_answer=NA) ---
     job_id = (
         os.environ.get("SLURM_ARRAY_JOB_ID")
         or os.environ.get("SLURM_JOB_ID")
@@ -145,10 +145,11 @@ def main() -> int:
     csv_path     = base + ".csv"
 
     Path(parquet_path).parent.mkdir(parents=True, exist_ok=True)
-    yes_df.to_parquet(parquet_path, index=False)
-    yes_df.to_csv(csv_path, index=False)
+    df.to_parquet(parquet_path, index=False)
+    df.to_csv(csv_path, index=False)
 
-    print(f"Saved: {parquet_path} | {len(yes_df):,} rows")
+    filled = int(df["critic_answer"].notna().sum())
+    print(f"Saved: {parquet_path} | {len(df):,} rows total ({filled:,} with critic_answer)")
 
     if Path(checkpoint_path).exists():
         Path(checkpoint_path).unlink()
