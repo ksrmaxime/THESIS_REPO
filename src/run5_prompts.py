@@ -1,4 +1,4 @@
-# src/run5_prompts.py
+po# src/run5_prompts.py
 from __future__ import annotations
 import pandas as pd
 from src.run2_prompts import get_composition_idx, get_council_for_date, _format_council_list
@@ -62,12 +62,9 @@ Do not add any explanation, preamble, or extra line.\
 """
 
 
-def build_system_prompt(pubtime, keyword: str) -> str:
+def build_system_prompt(pubtime) -> str:
     composition = get_council_for_date(pubtime)
-    return _SYSTEM_PROMPT_TEMPLATE.format(
-        keyword=keyword,
-        council_list=_format_council_list(composition),
-    )
+    return _SYSTEM_PROMPT_TEMPLATE.format(council_list=_format_council_list(composition))
 
 
 USER_TEMPLATE = """\
