@@ -126,16 +126,16 @@ def main() -> int:
 
     # Group by (keyword, Federal Council composition) so all rows in a batch share the same system prompt
     if PUBTIME_COL in df.columns:
-        df["_comp_idx"] = df[PUBTIME_COL].apply(get_composition_idx)
+        df["comp_idx"] = df[PUBTIME_COL].apply(get_composition_idx)
     else:
         print(f"[warn] column '{PUBTIME_COL}' not found — using latest council composition")
-        df["_comp_idx"] = get_composition_idx(None)
+        df["comp_idx"] = get_composition_idx(None)
 
     out = df.copy()
-    group_keys = df[["keyword", "_comp_idx"]].drop_duplicates().itertuples(index=False)
-    for grp in sorted(group_keys):
-        keyword, comp_idx = grp.keyword, grp._comp_idx
-        group_mask = mask & (df["keyword"] == keyword) & (df["_comp_idx"] == comp_idx)
+    group_keys = sorted(df[["keyword", "comp_idx"]].drop_duplicates().itertuples(index=False))
+    for grp in group_keys:
+        keyword, comp_idx = grp.keyword, grp.comp_idx
+        group_mask = mask & (df["keyword"] == keyword) & (df["comp_idx"] == comp_idx)
         if not group_mask.any():
             continue
 
@@ -156,7 +156,7 @@ def main() -> int:
             checkpoint_every=50,
         )
 
-    out = out.drop(columns=["_comp_idx"])
+    out = out.drop(columns=["comp_idx"])
 
     job_id = (
         os.environ.get("SLURM_ARRAY_JOB_ID")
