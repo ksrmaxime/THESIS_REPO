@@ -11,6 +11,10 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --array=0-8   # 9 tâches (0-8) — ajuster selon le volume
 
+# Trace immédiate avant tout — si cette ligne n'apparaît pas dans les logs,
+# c'est que SLURM tue le job avant même que bash ne démarre.
+echo "=== BASH STARTED — job=${SLURM_JOB_ID:-?} task=${SLURM_ARRAY_TASK_ID:-?} host=$(hostname) ===" 2>&1
+
 set -euo pipefail
 
 # =============================================================================
@@ -42,7 +46,7 @@ NUM_TASKS=9   # doit correspondre au nombre de tâches dans --array (0-8 = 9 tâ
 
 # =============================================================================
 
-module purge
+module purge || true
 module load python/3.12.1
 
 cd "$WORKDIR"
