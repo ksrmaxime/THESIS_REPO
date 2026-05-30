@@ -5,8 +5,8 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=48G
 #SBATCH --time=06:00:00
-#SBATCH --output=logs/run5_array_%A_%a.out
-#SBATCH --error=logs/run5_array_%A_%a.err
+#SBATCH --output=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO/logs/run5_array_%A_%a.out
+#SBATCH --error=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO/logs/run5_array_%A_%a.err
 #SBATCH --mail-user=maxime.kaiser@unil.ch
 #SBATCH --mail-type=END,FAIL
 #SBATCH --array=0-8   # 9 tâches (0-8) — ajuster selon le volume
