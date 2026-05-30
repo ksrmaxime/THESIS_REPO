@@ -62,9 +62,12 @@ Do not add any explanation, preamble, or extra line.\
 """
 
 
-def build_system_prompt(pubtime) -> str:
+def build_system_prompt(pubtime, keyword: str) -> str:
     composition = get_council_for_date(pubtime)
-    return _SYSTEM_PROMPT_TEMPLATE.format(council_list=_format_council_list(composition))
+    return _SYSTEM_PROMPT_TEMPLATE.format(
+        keyword=keyword,
+        council_list=_format_council_list(composition),
+    )
 
 
 USER_TEMPLATE = """\
