@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 #SBATCH --job-name=std_run5
 #SBATCH --partition=cpu
 #SBATCH --cpus-per-task=2
