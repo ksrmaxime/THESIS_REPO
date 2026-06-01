@@ -30,7 +30,7 @@ WORKDIR=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO
 INPUT=${WORKDIR}/data/output/run4_merged_61312765.parquet
 OUTPUT_BASE=${WORKDIR}/data/output/run6
 TEXT_COL=critic_answer
-N_ROWS=0        # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
+N_ROWS=1000        # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
 
 # Model
 MODEL_PATH=/reference/LLM/swiss-ai/Apertus-8B-Instruct-2509
