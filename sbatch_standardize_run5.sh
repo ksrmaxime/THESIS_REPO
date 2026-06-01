@@ -10,7 +10,7 @@
 #SBATCH --mail-type=END,FAIL
 
 # Usage:
-#   sbatch sbatch_standardize_run5.sh /path/to/run5_merged_jobXXX/results.parquet
+#   sbatch sbatch_standardize_run5.sh
 
 dcsrsoft use 20241118
 
@@ -25,18 +25,13 @@ source .venv/bin/activate
 
 mkdir -p logs
 
-INPUT=${1:-""}
-if [ -z "$INPUT" ]; then
-    echo "[ERROR] Passer le chemin du fichier run5 en argument: sbatch sbatch_standardize_run5.sh <INPUT_PATH>"
-    exit 1
-fi
+INPUT="${WORKDIR}/data/output/run5_merged_61406751.parquet"
+OUTPUT_DIR="${WORKDIR}/data/output/run5_standardized_job${SLURM_JOB_ID}"
 
 if [ ! -f "$INPUT" ]; then
     echo "[ERROR] Fichier introuvable : ${INPUT}"
     exit 1
 fi
-
-OUTPUT_DIR="${WORKDIR}/data/output/run5_standardized_job${SLURM_JOB_ID}"
 
 echo "=== STANDARDIZE run5 → job ${SLURM_JOB_ID} ==="
 echo "DATE=$(date -Is)"
