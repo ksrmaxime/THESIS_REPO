@@ -12,13 +12,20 @@
 dcsrsoft use 20241118
 
 # Usage:
-#   sbatch sbatch_merge_run6.sh
+#   sbatch sbatch_merge_run6.sh <ARRAY_JOB_ID>
 #
 # Ou avec dépendance sur le job array :
 #   ARRAY_ID=$(sbatch --parsable sbatch_run6_array.sh) && \
-#   sbatch --dependency=afterok:${ARRAY_ID} sbatch_merge_run6.sh
+#   sbatch --dependency=afterok:${ARRAY_ID} sbatch_merge_run6.sh ${ARRAY_ID}
 
 set -euo pipefail
+
+# $1 = ARRAY_JOB_ID (obligatoire)
+if [[ -z "${1:-}" ]]; then
+    echo "[ERROR] Usage: sbatch sbatch_merge_run6.sh <ARRAY_JOB_ID>" >&2
+    exit 1
+fi
+ARRAY_JOB_ID="$1"
 
 module purge
 module load python/3.12.1
@@ -35,10 +42,10 @@ MERGE_ID="${SLURM_JOB_ID:-$(date +%Y%m%d_%H%M%S)}"
 MERGED_PARQUET="${OUTDIR}/run6_merged_${MERGE_ID}.parquet"
 MERGED_CSV="${OUTDIR}/run6_merged_${MERGE_ID}.csv"
 
-echo "=== MERGE run6 (job ${MERGE_ID}) ==="
+echo "=== MERGE run6 (job ${MERGE_ID}) — array ${ARRAY_JOB_ID} ==="
 echo "DATE=$(date -Is)"
 
-export OUTDIR OUTBASE MERGE_ID MERGED_PARQUET MERGED_CSV
+export OUTDIR OUTBASE ARRAY_JOB_ID MERGE_ID MERGED_PARQUET MERGED_CSV
 
 python3 - <<'PYEOF'
 import sys
@@ -47,17 +54,19 @@ import glob
 import pandas as pd
 
 outbase        = os.environ["OUTBASE"]
+array_job_id   = os.environ["ARRAY_JOB_ID"]
 merged_parquet = os.environ["MERGED_PARQUET"]
 merged_csv     = os.environ["MERGED_CSV"]
 
 # ---------------------------------------------------------------------------
-# 1. Gather task outputs
+# 1. Gather task outputs — filtrer sur le job ID pour éviter de mélanger
+#    les sorties de runs précédents
 # ---------------------------------------------------------------------------
-pattern = f"{outbase}_task*.parquet"
+pattern = f"{outbase}_task*_job{array_job_id}.parquet"
 files = sorted(glob.glob(pattern))
 
 if not files:
-    pattern = f"{outbase}_task*.csv"
+    pattern = f"{outbase}_task*_job{array_job_id}.csv"
     files = sorted(glob.glob(pattern))
     if not files:
         print(f"[ERROR] Aucun fichier trouvé avec le pattern: {pattern}", file=sys.stderr)
