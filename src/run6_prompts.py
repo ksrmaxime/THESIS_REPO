@@ -12,14 +12,19 @@ or at their political actions and proposals?
 
   Person  → the criticism targets the person/entity ITSELF:
              their character, personality, morality, ethics, integrity, reputation,
-             behaviour, management or leadership style, competence as an individual,
-             specific statements or words they used, personal history, personal conduct.
-             Use this when the attack is on who they ARE, not on a specific thing they did.
+             behaviour, management or leadership style, competence or effectiveness,
+             specific statements or words they used, personal history, personal conduct,
+             violation of norms or rules of conduct.
+             Use this when the attack is on WHO THEY ARE or HOW THEY BEHAVE,
+             even if that behaviour has political implications.
+             Key signal: no specific named policy, reform or dossier is being criticised.
 
-  Policy  → the criticism targets their ACTIONS, DECISIONS or PROPOSALS:
-             a bill, a reform, a regulation, a budget, a strategy, a dossier or a project
-             they are responsible for; a specific political decision, position or file.
-             Use this when the attack is on a concrete thing they DID or PROPOSED.
+  Policy  → the criticism targets a specific, identifiable POLICY, DECISION or PROPOSAL:
+             a named bill, reform, regulation, budget, strategy, dossier or project
+             they are responsible for; a concrete political decision, position or file.
+             Use this ONLY when the attack is on a SPECIFIC THING THEY DID OR PROPOSED —
+             not their general conduct, effectiveness, or the fact that they acted at all.
+             Key signal: you could name the specific policy or decision being criticised.
 
   Both    → the description contains clear elements of BOTH personal and policy criticism
              (e.g. questions both the minister's integrity AND a specific reform they proposed).
@@ -37,6 +42,12 @@ TARGET: Policy
 
 Description: "NGOs attack both his leadership style and the budget cuts he proposed"
 TARGET: Both
+
+Description: "A minister is criticised for calling publicly to vote for a far-right party abroad, violating neutrality rules"
+TARGET: Person
+
+Description: "The supervisory authority is criticised for its inability to hold large banks accountable and for being ineffective"
+TARGET: Person
 
 Description: "Several critics expressed concerns"
 TARGET: Unclear
