@@ -26,8 +26,12 @@ or at their political actions and proposals?
              not their general conduct, effectiveness, or the fact that they acted at all.
              Key signal: you could name the specific policy or decision being criticised.
 
-  Both    → the description contains clear elements of BOTH personal and policy criticism
-             (e.g. questions both the minister's integrity AND a specific reform they proposed).
+  Both    → use ONLY when the description SIMULTANEOUSLY and EXPLICITLY contains:
+             (1) a clear personal criticism (character, behaviour, competence, conduct), AND
+             (2) a criticism of a specific named policy, reform or decision.
+             BOTH elements must be clearly present and distinct — not just implied.
+             If one element is dominant or the other is only vaguely mentioned → use Person or Policy.
+             When in doubt between Both and another label → do NOT choose Both.
 
   Unclear → the description does not provide enough information to determine
              whether the criticism is personal or policy-oriented.
@@ -40,8 +44,14 @@ TARGET: Person
 Description: "The SVP criticises the proposed immigration reform"
 TARGET: Policy
 
-Description: "NGOs attack both his leadership style and the budget cuts he proposed"
+Description: "NGOs attack both his dishonesty and the specific budget cuts he proposed"
 TARGET: Both
+
+Description: "Multiple politicians criticise the army budget increase and the savings package"
+TARGET: Policy
+
+Description: "The department is criticised for lack of action against large banks, impunity granted to executives, and failure to hold institutions accountable"
+TARGET: Person
 
 Description: "A minister is criticised for calling publicly to vote for a far-right party abroad, violating neutrality rules"
 TARGET: Person
