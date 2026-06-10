@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 #SBATCH --job-name=run4_array
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
@@ -10,6 +10,8 @@
 #SBATCH --mail-user=maxime.kaiser@unil.ch
 #SBATCH --mail-type=END,FAIL
 #SBATCH --array=0-8   # 9 tâches (0-8)
+
+dcsrsoft use 20241118
 
 set -euo pipefail
 

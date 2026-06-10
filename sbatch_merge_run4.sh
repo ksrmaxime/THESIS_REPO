@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 #SBATCH --job-name=merge_run4
 #SBATCH --partition=cpu
 #SBATCH --cpus-per-task=4
@@ -8,6 +8,8 @@
 #SBATCH --error=logs/merge_run4_%j.err
 #SBATCH --mail-user=maxime.kaiser@unil.ch
 #SBATCH --mail-type=END,FAIL
+
+dcsrsoft use 20241118
 
 # Usage:
 #   sbatch sbatch_merge_run4.sh

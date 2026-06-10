@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 #SBATCH --job-name=thesis_tag_keywords
 #SBATCH --partition=cpu
 #SBATCH --cpus-per-task=4
@@ -8,6 +8,8 @@
 #SBATCH --error=logs/tag_keywords_%j.err
 #SBATCH --mail-user=maxime.kaiser@unil.ch
 #SBATCH --mail-type=END,FAIL
+
+dcsrsoft use 20241118
 
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1

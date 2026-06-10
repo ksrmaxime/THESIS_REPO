@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 #SBATCH --job-name=run5_array
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
@@ -10,6 +10,8 @@
 #SBATCH --mail-user=maxime.kaiser@unil.ch
 #SBATCH --mail-type=END,FAIL
 #SBATCH --array=0-8   # 9 tâches (0-8) — ajuster selon le volume
+
+dcsrsoft use 20241118
 
 # Trace immédiate avant tout — si cette ligne n'apparaît pas dans les logs,
 # c'est que SLURM tue le job avant même que bash ne démarre.
