@@ -12,8 +12,7 @@ import pandas as pd
 
 from src.client import TransformersClient, LLMConfig
 from src.runner import run_llm_dataframe, RunConfig
-from src.run5_prompts import build_system_prompt, build_user_prompt
-from src.run2_prompts import get_composition_idx
+from src.run5_prompts import build_system_prompt, build_user_prompt, get_composition_idx
 from src.run5_config import build_mask
 
 OUTPUT_COLS = ["source_category"]

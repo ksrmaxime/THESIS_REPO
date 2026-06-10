@@ -27,10 +27,10 @@ WORKDIR=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO
 
 # I/O
 # Input = fichier merged produit par sbatch_merge_run4.sh  ← à adapter
-INPUT=${WORKDIR}/data/output/run5_standardized_job61406977/results.parquet
+INPUT=${1:-"${WORKDIR}/data/output/run5_standardized_job61406977/results.parquet"}
 OUTPUT_BASE=${WORKDIR}/data/output/run6
 TEXT_COL=critic_answer
-N_ROWS=1000        # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
+N_ROWS=0           # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
 
 # Model
 MODEL_PATH=/reference/LLM/swiss-ai/Apertus-8B-Instruct-2509
@@ -58,6 +58,13 @@ source .venv/bin/activate
 export PYTORCH_ALLOC_CONF=expandable_segments:True
 
 mkdir -p logs data/output
+
+# ── Auto-chain : task 0 soumet le merge dès le début (SLURM attend que TOUTES les tâches réussissent) ──
+if [[ "${SLURM_ARRAY_TASK_ID:-}" == "0" ]]; then
+    sbatch --dependency=afterok:${SLURM_ARRAY_JOB_ID} \
+        "${WORKDIR}/sbatch_merge_run6.sh" "${SLURM_ARRAY_JOB_ID}"
+    echo "[chain] Submitted sbatch_merge_run6.sh (dependency: afterok:${SLURM_ARRAY_JOB_ID})"
+fi
 
 echo "=== SLURM ARRAY ==="
 echo "ARRAY_JOB_ID=${SLURM_ARRAY_JOB_ID:-<unset>} TASK_ID=${SLURM_ARRAY_TASK_ID:-<unset>}"

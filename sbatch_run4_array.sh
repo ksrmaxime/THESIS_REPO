@@ -9,7 +9,7 @@
 #SBATCH --error=logs/run4_array_%A_%a.err
 #SBATCH --mail-user=maxime.kaiser@unil.ch
 #SBATCH --mail-type=END,FAIL
-#SBATCH --array=0-8   # 8 GPUs en parallèle
+#SBATCH --array=0-8   # 9 tâches (0-8)
 
 set -euo pipefail
 
@@ -21,10 +21,10 @@ WORKDIR=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO
 
 # I/O
 # Input = fichier merged produit par sbatch_merge_run3.sh  ← à adapter
-INPUT=${WORKDIR}/data/output/run3_merged_job61194047.parquet
+INPUT=${1:-"${WORKDIR}/data/output/run3_merged_job61194047.parquet"}
 OUTPUT_BASE=${WORKDIR}/data/output/run4
 TEXT_COL=text
-N_ROWS=1000        # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
+N_ROWS=0           # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
 
 # Model
 MODEL_PATH=/reference/LLM/swiss-ai/Apertus-8B-Instruct-2509
@@ -37,7 +37,7 @@ MAX_NEW_TOKENS=200    # réponse libre (nom/entité) — plus long que run3
 MAX_INPUT_TOKENS=16384
 TEMPERATURE=0.0
 
-NUM_TASKS=8   # doit correspondre au nombre de tâches dans --array
+NUM_TASKS=9   # doit correspondre au nombre de tâches dans --array (0-8 = 9 tâches)
 
 # =============================================================================
 
@@ -50,6 +50,13 @@ source .venv/bin/activate
 export PYTORCH_ALLOC_CONF=expandable_segments:True
 
 mkdir -p logs data/output
+
+# ── Auto-chain : task 0 soumet le merge dès le début (SLURM attend que TOUTES les tâches réussissent) ──
+if [[ "${SLURM_ARRAY_TASK_ID:-}" == "0" ]]; then
+    sbatch --dependency=afterok:${SLURM_ARRAY_JOB_ID} \
+        "${WORKDIR}/sbatch_merge_run4.sh"
+    echo "[chain] Submitted sbatch_merge_run4.sh (dependency: afterok:${SLURM_ARRAY_JOB_ID})"
+fi
 
 echo "=== SLURM ARRAY ==="
 echo "ARRAY_JOB_ID=${SLURM_ARRAY_JOB_ID:-<unset>} TASK_ID=${SLURM_ARRAY_TASK_ID:-<unset>}"

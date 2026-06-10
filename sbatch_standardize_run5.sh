@@ -10,7 +10,7 @@
 #SBATCH --mail-type=END,FAIL
 
 # Usage:
-#   sbatch sbatch_standardize_run5.sh
+#   sbatch sbatch_standardize_run5.sh [<merged_parquet_path>]
 
 dcsrsoft use 20241118
 
@@ -25,7 +25,7 @@ source .venv/bin/activate
 
 mkdir -p logs
 
-INPUT="${WORKDIR}/data/output/run5_merged_61406751.parquet"
+INPUT=${1:-"${WORKDIR}/data/output/run5_merged_61406751.parquet"}
 OUTPUT_DIR="${WORKDIR}/data/output/run5_standardized_job${SLURM_JOB_ID}"
 
 if [ ! -f "$INPUT" ]; then
@@ -46,3 +46,8 @@ echo "=== DONE ==="
 echo "Output folder: ${OUTPUT_DIR}"
 echo "  results.parquet"
 echo "  results.csv"
+
+# ── Auto-chain ─────────────────────────────────────────────────────────────────
+STD_PARQUET="${OUTPUT_DIR}/results.parquet"
+sbatch "${WORKDIR}/sbatch_run6_array.sh" "${STD_PARQUET}"
+echo "[chain] → sbatch_run6_array.sh submitted (input: ${STD_PARQUET})"

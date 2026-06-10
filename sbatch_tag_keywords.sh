@@ -40,3 +40,8 @@ python scripts/tag_keywords.py \
   --outdir data/input
 
 echo "Job finished."
+
+# ── Auto-chain ─────────────────────────────────────────────────────────────────
+TAGGED_FILE="${REPO_DIR}/data/input/swissdox_2025_tagged.csv"
+sbatch "${REPO_DIR}/sbatch_run3_array.sh" "${TAGGED_FILE}"
+echo "[chain] → sbatch_run3_array.sh submitted (input: ${TAGGED_FILE})"

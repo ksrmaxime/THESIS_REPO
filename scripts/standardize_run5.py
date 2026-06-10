@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
 import pandas as pd
-from src.run2_prompts import _COUNCIL_COMPOSITIONS, get_council_for_date
+from src.run5_prompts import _COUNCIL_COMPOSITIONS, get_council_for_date
 
 # ---------------------------------------------------------------------------
 # Reference data (identical to standardize_run2)

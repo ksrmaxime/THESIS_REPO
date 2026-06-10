@@ -126,3 +126,6 @@ echo "  prompts_used.py"
 echo "  sbatch_array_used.sh / sbatch_merge_used.sh"
 
 echo "Merge terminé."
+
+echo "=== PIPELINE COMPLET ==="
+echo "Résultat final : ${MERGED_CSV}"

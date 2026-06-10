@@ -117,3 +117,7 @@ echo "  prompts_used.py"
 echo "  sbatch_array_used.sh / sbatch_merge_used.sh"
 
 echo "Merge terminé."
+
+# ── Auto-chain ─────────────────────────────────────────────────────────────────
+sbatch "${WORKDIR}/sbatch_standardize_run5.sh" "${MERGED_PARQUET}"
+echo "[chain] → sbatch_standardize_run5.sh submitted (input: ${MERGED_PARQUET})"

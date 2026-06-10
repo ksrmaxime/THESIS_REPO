@@ -1,7 +1,253 @@
 # src/run5_prompts.py
 from __future__ import annotations
 import pandas as pd
-from src.run2_prompts import get_composition_idx, get_council_for_date, _format_council_list
+from datetime import date, datetime
+from typing import Optional
+
+# ---------------------------------------------------------------------------
+# Federal Council compositions
+# Each entry: (start: date, end: date, {dept_abbrev: councillor_name})
+# ---------------------------------------------------------------------------
+_COUNCIL_COMPOSITIONS: list[tuple[date, date, dict[str, str]]] = [
+    (
+        date(2000, 1, 1), date(2000, 12, 31),
+        {
+            "DFAE/EDA":   "Joseph Deiss",
+            "DFI/EDI":    "Ruth Dreifuss",
+            "DFJP/EJPD":  "Ruth Metzler-Arnold",
+            "DDPS/VBS":   "Adolf Ogi",
+            "DFF/EFD":    "Kaspar Villiger",
+            "DFE/EVD":    "Pascal Couchepin",
+            "DETEC/UVEK": "Moritz Leuenberger",
+        },
+    ),
+    (
+        date(2001, 1, 1), date(2002, 12, 31),
+        {
+            "DFAE/EDA":   "Joseph Deiss",
+            "DFI/EDI":    "Ruth Dreifuss",
+            "DFJP/EJPD":  "Ruth Metzler-Arnold",
+            "DDPS/VBS":   "Samuel Schmid",
+            "DFF/EFD":    "Kaspar Villiger",
+            "DFE/EVD":    "Pascal Couchepin",
+            "DETEC/UVEK": "Moritz Leuenberger",
+        },
+    ),
+    (
+        date(2003, 1, 1), date(2003, 12, 31),
+        {
+            "DFAE/EDA":   "Micheline Calmy-Rey",
+            "DFI/EDI":    "Pascal Couchepin",
+            "DFJP/EJPD":  "Ruth Metzler-Arnold",
+            "DDPS/VBS":   "Samuel Schmid",
+            "DFF/EFD":    "Kaspar Villiger",
+            "DFE/EVD":    "Joseph Deiss",
+            "DETEC/UVEK": "Moritz Leuenberger",
+        },
+    ),
+    (
+        date(2004, 1, 1), date(2006, 7, 31),
+        {
+            "DFAE/EDA":   "Micheline Calmy-Rey",
+            "DFI/EDI":    "Pascal Couchepin",
+            "DFJP/EJPD":  "Christoph Blocher",
+            "DDPS/VBS":   "Samuel Schmid",
+            "DFF/EFD":    "Hans-Rudolf Merz",
+            "DFE/EVD":    "Joseph Deiss",
+            "DETEC/UVEK": "Moritz Leuenberger",
+        },
+    ),
+    (
+        date(2006, 8, 1), date(2007, 12, 31),
+        {
+            "DFAE/EDA":   "Micheline Calmy-Rey",
+            "DFI/EDI":    "Pascal Couchepin",
+            "DFJP/EJPD":  "Christoph Blocher",
+            "DDPS/VBS":   "Samuel Schmid",
+            "DFF/EFD":    "Hans-Rudolf Merz",
+            "DFE/EVD":    "Doris Leuthard",
+            "DETEC/UVEK": "Moritz Leuenberger",
+        },
+    ),
+    (
+        date(2008, 1, 1), date(2008, 12, 31),
+        {
+            "DFAE/EDA":   "Micheline Calmy-Rey",
+            "DFI/EDI":    "Pascal Couchepin",
+            "DFJP/EJPD":  "Eveline Widmer-Schlumpf",
+            "DDPS/VBS":   "Samuel Schmid",
+            "DFF/EFD":    "Hans-Rudolf Merz",
+            "DFE/EVD":    "Doris Leuthard",
+            "DETEC/UVEK": "Moritz Leuenberger",
+        },
+    ),
+    (
+        date(2009, 1, 1), date(2009, 10, 31),
+        {
+            "DFAE/EDA":   "Micheline Calmy-Rey",
+            "DFI/EDI":    "Pascal Couchepin",
+            "DFJP/EJPD":  "Eveline Widmer-Schlumpf",
+            "DDPS/VBS":   "Ueli Maurer",
+            "DFF/EFD":    "Hans-Rudolf Merz",
+            "DFE/EVD":    "Doris Leuthard",
+            "DETEC/UVEK": "Moritz Leuenberger",
+        },
+    ),
+    (
+        date(2009, 11, 1), date(2010, 10, 31),
+        {
+            "DFAE/EDA":   "Micheline Calmy-Rey",
+            "DFI/EDI":    "Didier Burkhalter",
+            "DFJP/EJPD":  "Eveline Widmer-Schlumpf",
+            "DDPS/VBS":   "Ueli Maurer",
+            "DFF/EFD":    "Hans-Rudolf Merz",
+            "DFE/EVD":    "Doris Leuthard",
+            "DETEC/UVEK": "Moritz Leuenberger",
+        },
+    ),
+    (
+        date(2010, 11, 1), date(2011, 12, 31),
+        {
+            "DFAE/EDA":   "Micheline Calmy-Rey",
+            "DFI/EDI":    "Didier Burkhalter",
+            "DFJP/EJPD":  "Simonetta Sommaruga",
+            "DDPS/VBS":   "Ueli Maurer",
+            "DFF/EFD":    "Eveline Widmer-Schlumpf",
+            "DEFR/WBF":   "Johann Schneider-Ammann",
+            "DETEC/UVEK": "Doris Leuthard",
+        },
+    ),
+    (
+        date(2012, 1, 1), date(2015, 12, 31),
+        {
+            "DFAE/EDA":   "Didier Burkhalter",
+            "DFI/EDI":    "Alain Berset",
+            "DFJP/EJPD":  "Simonetta Sommaruga",
+            "DDPS/VBS":   "Ueli Maurer",
+            "DFF/EFD":    "Eveline Widmer-Schlumpf",
+            "DEFR/WBF":   "Johann Schneider-Ammann",
+            "DETEC/UVEK": "Doris Leuthard",
+        },
+    ),
+    (
+        date(2016, 1, 1), date(2017, 10, 31),
+        {
+            "DFAE/EDA":   "Didier Burkhalter",
+            "DFI/EDI":    "Alain Berset",
+            "DFJP/EJPD":  "Simonetta Sommaruga",
+            "DDPS/VBS":   "Guy Parmelin",
+            "DFF/EFD":    "Ueli Maurer",
+            "DEFR/WBF":   "Johann Schneider-Ammann",
+            "DETEC/UVEK": "Doris Leuthard",
+        },
+    ),
+    (
+        date(2017, 11, 1), date(2018, 12, 31),
+        {
+            "DFAE/EDA":   "Ignazio Cassis",
+            "DFI/EDI":    "Alain Berset",
+            "DFJP/EJPD":  "Simonetta Sommaruga",
+            "DDPS/VBS":   "Guy Parmelin",
+            "DFF/EFD":    "Ueli Maurer",
+            "DEFR/WBF":   "Johann Schneider-Ammann",
+            "DETEC/UVEK": "Doris Leuthard",
+        },
+    ),
+    (
+        date(2019, 1, 1), date(2022, 12, 31),
+        {
+            "DFAE/EDA":   "Ignazio Cassis",
+            "DFI/EDI":    "Alain Berset",
+            "DFJP/EJPD":  "Karin Keller-Sutter",
+            "DDPS/VBS":   "Viola Amherd",
+            "DFF/EFD":    "Ueli Maurer",
+            "DEFR/WBF":   "Guy Parmelin",
+            "DETEC/UVEK": "Simonetta Sommaruga",
+        },
+    ),
+    (
+        date(2023, 1, 1), date(2023, 12, 31),
+        {
+            "DFAE/EDA":   "Ignazio Cassis",
+            "DFI/EDI":    "Alain Berset",
+            "DFJP/EJPD":  "Elisabeth Baume-Schneider",
+            "DDPS/VBS":   "Viola Amherd",
+            "DFF/EFD":    "Karin Keller-Sutter",
+            "DEFR/WBF":   "Guy Parmelin",
+            "DETEC/UVEK": "Albert Rösti",
+        },
+    ),
+    (
+        date(2024, 1, 1), date(2025, 3, 31),
+        {
+            "DFAE/EDA":   "Ignazio Cassis",
+            "DFI/EDI":    "Elisabeth Baume-Schneider",
+            "DFJP/EJPD":  "Beat Jans",
+            "DDPS/VBS":   "Viola Amherd",
+            "DFF/EFD":    "Karin Keller-Sutter",
+            "DEFR/WBF":   "Guy Parmelin",
+            "DETEC/UVEK": "Albert Rösti",
+        },
+    ),
+    (
+        date(2025, 4, 1), date(9999, 12, 31),
+        {
+            "DFAE/EDA":   "Ignazio Cassis",
+            "DFI/EDI":    "Elisabeth Baume-Schneider",
+            "DFJP/EJPD":  "Beat Jans",
+            "DDPS/VBS":   "Martin Pfister",
+            "DFF/EFD":    "Karin Keller-Sutter",
+            "DEFR/WBF":   "Guy Parmelin",
+            "DETEC/UVEK": "Albert Rösti",
+        },
+    ),
+]
+
+
+def _coerce_date(val) -> Optional[date]:
+    """Coerce any pubtime value (str, Timestamp, datetime, date, NaN) to date."""
+    if val is None:
+        return None
+    try:
+        if pd.isna(val):
+            return None
+    except (TypeError, ValueError):
+        pass
+    if isinstance(val, date) and not isinstance(val, datetime):
+        return val
+    if isinstance(val, datetime):
+        return val.date()
+    if isinstance(val, pd.Timestamp):
+        return val.date()
+    try:
+        return pd.to_datetime(str(val)).date()
+    except Exception:
+        return None
+
+
+def get_composition_idx(pubtime) -> int:
+    """Return the index into _COUNCIL_COMPOSITIONS for the given pubtime."""
+    d = _coerce_date(pubtime)
+    if d is None:
+        return len(_COUNCIL_COMPOSITIONS) - 1
+    for i, (start, end, _) in enumerate(_COUNCIL_COMPOSITIONS):
+        if start <= d <= end:
+            return i
+    if d < _COUNCIL_COMPOSITIONS[0][0]:
+        return 0
+    return len(_COUNCIL_COMPOSITIONS) - 1
+
+
+def get_council_for_date(pubtime) -> dict[str, str]:
+    return _COUNCIL_COMPOSITIONS[get_composition_idx(pubtime)][2]
+
+
+def _format_council_list(composition: dict[str, str]) -> str:
+    lines = [
+        f"                        {dept:<11} — {name}"
+        for dept, name in composition.items()
+    ]
+    return "\n".join(lines)
 
 _SYSTEM_PROMPT_TEMPLATE = """\
 You are a media analysis assistant specialised in Swiss public affairs.
