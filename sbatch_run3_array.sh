@@ -34,7 +34,7 @@ DTYPE=bf16
 BACKEND=transformers
 
 # Inference
-BATCH_SIZE=2
+BATCH_SIZE=4
 MAX_NEW_TOKENS=5      # réponse = YES ou NO = 1 token
 MAX_INPUT_TOKENS=16384
 TEMPERATURE=0.0

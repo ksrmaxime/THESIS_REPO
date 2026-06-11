@@ -119,16 +119,35 @@ class TransformersClient:
         return [out.outputs[0].text.strip() for out in outputs]
 
     def _generate_transformers(self, prompts, temperature, max_new_tokens, max_input_tokens):
-        """Process prompts one-by-one to minimise peak GPU memory usage."""
         do_sample = float(temperature) > 0.0
-        results = []
 
-        for prompt in prompts:
+        # Sort by token length to minimise padding waste within each batch
+        pairs = sorted(enumerate(prompts), key=lambda x: len(self.tok.encode(x[1])))
+        sorted_indices = [p[0] for p in pairs]
+        sorted_prompts = [p[1] for p in pairs]
+
+        sorted_results = self._generate_with_fallback(
+            sorted_prompts, do_sample, temperature, max_new_tokens, max_input_tokens
+        )
+
+        # Restore original order
+        results = [None] * len(prompts)
+        for orig_idx, result in zip(sorted_indices, sorted_results):
+            results[orig_idx] = result
+        return results
+
+    def _generate_with_fallback(self, prompts, do_sample, temperature, max_new_tokens, max_input_tokens):
+        """Try to generate for all prompts at once; on OOM, split in half and retry."""
+        if not prompts:
+            return []
+
+        try:
             enc = self.tok(
-                prompt,
+                prompts,
                 return_tensors="pt",
                 truncation=True,
                 max_length=max_input_tokens,
+                padding=True,
             )
             enc = {k: v.to(self.model.device) for k, v in enc.items()}
 
@@ -143,11 +162,22 @@ class TransformersClient:
                 )
 
             input_len = enc["input_ids"].shape[1]
-            text = self.tok.decode(out[0, input_len:], skip_special_tokens=True).strip()
-            results.append(text)
-
-            # Free activation memory before next prompt
+            results = [
+                self.tok.decode(out[i, input_len:], skip_special_tokens=True).strip()
+                for i in range(len(prompts))
+            ]
             del enc, out
             self.torch.cuda.empty_cache()
+            return results
 
-        return results
+        except self.torch.cuda.OutOfMemoryError:
+            self.torch.cuda.empty_cache()
+            if len(prompts) == 1:
+                # Single prompt is too long even alone — skip it
+                print(f"[OOM] Single prompt exceeds GPU memory even alone, skipping.", flush=True)
+                return [""]
+            mid = len(prompts) // 2
+            print(f"[OOM] Batch of {len(prompts)} → retrying as {mid} + {len(prompts) - mid}", flush=True)
+            left  = self._generate_with_fallback(prompts[:mid],  do_sample, temperature, max_new_tokens, max_input_tokens)
+            right = self._generate_with_fallback(prompts[mid:], do_sample, temperature, max_new_tokens, max_input_tokens)
+            return left + right
