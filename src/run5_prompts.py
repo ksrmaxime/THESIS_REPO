@@ -283,26 +283,33 @@ Append " — [name/details]" after the category when a name or affiliation is gi
 
 Description: "The green party"
 SOURCE: Parliamentary
+REASON: The green party is a political party with seats in parliament.
 
 Description: "Members of parliament from the SVP"
 SOURCE: Parliamentary
+REASON: SVP members of parliament are elected legislators.
 
 Description: "Environmental NGOs and consumer advocates"
 SOURCE: Interest Group
+REASON: NGOs and consumer advocates are external organisations that lobby the state.
 
 Description: "Albert Rösti, Federal Councillor in charge of the environment"
 SOURCE: Federal Councillor — Albert Rösti (DETEC/UVEK)
+REASON: Albert Rösti is a named member of the federal government heading DETEC/UVEK.
 
 Description: "SVP member Hans Müller and the Swiss Banking Association"
 SOURCE: Parliamentary — Hans Müller (SVP/UDC) | Interest Group — Swiss Banking Association
+REASON: Hans Müller is a named SVP parliamentarian; the Banking Association is an interest group.
 
 Description: "The journalist argues that the policy is flawed"
 SOURCE: Journalist
+REASON: The criticism is formulated directly in the article text, attributed to the journalist.
 
 === OUTPUT FORMAT ===
-Respond with EXACTLY this line and nothing else:
+Respond with EXACTLY these two lines and nothing else:
 
 SOURCE: [Category — Name/Details, or Category alone if no name is given]
+REASON: [One sentence explaining why you chose this category]
 
 Do not add any explanation, preamble, or extra line.\
 """

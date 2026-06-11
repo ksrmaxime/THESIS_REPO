@@ -6,32 +6,26 @@ sys.path.append(str(ROOT))
 
 import math
 import os
-import re
 import argparse
 import pandas as pd
 
 from src.client import TransformersClient, LLMConfig
 from src.runner import run_llm_dataframe, RunConfig
-from src.run5_prompts import build_system_prompt, build_user_prompt, get_composition_idx
-from src.run5_config import build_mask
+from src.run4eval_prompts import SYSTEM_PROMPT, build_user_prompt
+from src.run4eval_config import build_mask
 
-OUTPUT_COLS = ["source_category", "source_reason"]
+OUTPUT_COLS = ["run4_valid"]
 
 
 def parse_output(raw: str) -> dict:
-    empty = {"source_category": pd.NA, "source_reason": pd.NA}
     if not raw:
-        return empty
-    result = dict(empty)
-    m = re.search(r"SOURCE:\s*(.+)", raw, flags=re.IGNORECASE)
-    if m:
-        val = m.group(1).strip()
-        result["source_category"] = val if val else pd.NA
-    m = re.search(r"REASON:\s*(.+)", raw, flags=re.IGNORECASE)
-    if m:
-        val = m.group(1).strip()
-        result["source_reason"] = val if val else pd.NA
-    return result
+        return {"run4_valid": pd.NA}
+    answer = raw.strip().upper()
+    if answer.startswith("YES"):
+        return {"run4_valid": "YES"}
+    elif answer.startswith("NO"):
+        return {"run4_valid": "NO"}
+    return {"run4_valid": pd.NA}
 
 
 def main() -> int:
@@ -41,7 +35,7 @@ def main() -> int:
     ap.add_argument("--input",        required=True,
                     help="Run4 merged output file (.parquet or .csv)")
     ap.add_argument("--output_base",  required=True)
-    ap.add_argument("--text_col",     default="critic_answer")
+    ap.add_argument("--text_col",     default="text")
     ap.add_argument("--n_rows",       type=int, default=0)
 
     # --- Model ---
@@ -104,6 +98,10 @@ def main() -> int:
         if col not in df.columns:
             df[col] = pd.Series(pd.NA, index=df.index, dtype="string")
 
+    mask = build_mask(df, text_col=args.text_col)
+    valid_count = int(mask.sum())
+    print(f"[pipeline] {len(df):,} rows in chunk → {valid_count:,} with critic_answer to validate")
+
     client = TransformersClient(
         LLMConfig(
             model_path=args.model_path,
@@ -122,45 +120,19 @@ def main() -> int:
         max_input_tokens=args.max_input_tokens,
     )
 
-    PUBTIME_COL = "pubtime"
-    mask = build_mask(df, text_col=args.text_col)
-
-    valid_count = int(mask.sum())
-    print(f"[pipeline] {len(df):,} rows in chunk → {valid_count:,} with valid critic_answer (will be sent to LLM)")
-
-    # Group by (keyword, Federal Council composition) so all rows in a batch share the same system prompt
-    if PUBTIME_COL in df.columns:
-        df["comp_idx"] = df[PUBTIME_COL].apply(get_composition_idx)
-    else:
-        print(f"[warn] column '{PUBTIME_COL}' not found — using latest council composition")
-        df["comp_idx"] = get_composition_idx(None)
-
-    out = df.copy()
-    group_keys = sorted(df[["keyword", "comp_idx"]].drop_duplicates().itertuples(index=False))
-    for grp in group_keys:
-        keyword, comp_idx = grp.keyword, grp.comp_idx
-        group_mask = mask & (df["keyword"] == keyword) & (df["comp_idx"] == comp_idx)
-        if not group_mask.any():
-            continue
-
-        sample_pubtime = df.loc[group_mask, PUBTIME_COL].iloc[0] if PUBTIME_COL in df.columns else None
-        system_prompt = build_system_prompt(sample_pubtime, keyword=keyword)
-
-        out = run_llm_dataframe(
-            df=out,
-            cfg=run_cfg,
-            client=client,
-            system_prompt=system_prompt,
-            select_mask_fn=lambda df_, gm=group_mask: gm,
-            build_prompt_fn=lambda row, col: build_user_prompt(row, col),
-            parse_fn=parse_output,
-            output_cols=OUTPUT_COLS,
-            skip_if_already_filled=OUTPUT_COLS[0],
-            checkpoint_path=checkpoint_path,
-            checkpoint_every=50,
-        )
-
-    out = out.drop(columns=["comp_idx"])
+    out = run_llm_dataframe(
+        df=df,
+        cfg=run_cfg,
+        client=client,
+        system_prompt=SYSTEM_PROMPT,
+        select_mask_fn=lambda df_: mask,
+        build_prompt_fn=lambda row, col: build_user_prompt(row, col),
+        parse_fn=parse_output,
+        output_cols=OUTPUT_COLS,
+        skip_if_already_filled=OUTPUT_COLS[0],
+        checkpoint_path=checkpoint_path,
+        checkpoint_every=50,
+    )
 
     job_id = (
         os.environ.get("SLURM_ARRAY_JOB_ID")
@@ -179,9 +151,9 @@ def main() -> int:
     out.to_parquet(parquet_path, index=False)
     out.to_csv(csv_path, index=False)
 
-    filled = int(out["source_category"].notna().sum())
-    reasoned = int(out["source_reason"].notna().sum())
-    print(f"Saved: {parquet_path} | {len(out):,} rows total ({filled:,} with source_category, {reasoned:,} with source_reason)")
+    yes_count = int((out["run4_valid"] == "YES").sum())
+    no_count  = int((out["run4_valid"] == "NO").sum())
+    print(f"Saved: {parquet_path} | {len(out):,} rows total (run4_valid: {yes_count:,} YES / {no_count:,} NO)")
 
     if checkpoint_path and Path(checkpoint_path).exists():
         Path(checkpoint_path).unlink()

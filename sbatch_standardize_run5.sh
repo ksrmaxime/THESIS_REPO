@@ -49,5 +49,5 @@ echo "  results.csv"
 
 # ── Auto-chain ─────────────────────────────────────────────────────────────────
 STD_PARQUET="${OUTPUT_DIR}/results.parquet"
-sbatch "${WORKDIR}/sbatch_run6_array.sh" "${STD_PARQUET}"
-echo "[chain] → sbatch_run6_array.sh submitted (input: ${STD_PARQUET})"
+sbatch "${WORKDIR}/sbatch_run5eval_array.sh" "${STD_PARQUET}"
+echo "[chain] → sbatch_run5eval_array.sh submitted (input: ${STD_PARQUET})"
