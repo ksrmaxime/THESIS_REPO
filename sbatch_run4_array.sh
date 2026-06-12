@@ -56,7 +56,7 @@ mkdir -p logs data/output
 # ── Auto-chain : task 0 soumet le merge dès le début (SLURM attend que TOUTES les tâches réussissent) ──
 if [[ "${SLURM_ARRAY_TASK_ID:-}" == "0" ]]; then
     sbatch --dependency=afterok:${SLURM_ARRAY_JOB_ID} \
-        "${WORKDIR}/sbatch_merge_run4.sh"
+        "${WORKDIR}/sbatch_merge_run4.sh" "${SLURM_ARRAY_JOB_ID}"
     echo "[chain] Submitted sbatch_merge_run4.sh (dependency: afterok:${SLURM_ARRAY_JOB_ID})"
 fi
 

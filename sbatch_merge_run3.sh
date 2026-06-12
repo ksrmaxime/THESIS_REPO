@@ -126,6 +126,7 @@ echo "  prompts_used.py"
 echo "  sbatch_array_used.sh / sbatch_merge_used.sh"
 
 echo "Merge terminé."
+echo "${RUN_DIR}" > "${WORKDIR}/data/output/.last_run3_archive"
 
 # ── Auto-chain ─────────────────────────────────────────────────────────────────
 sbatch "${WORKDIR}/sbatch_run4_array.sh" "${MERGED_PARQUET}"

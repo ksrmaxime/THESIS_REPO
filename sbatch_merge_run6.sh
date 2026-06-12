@@ -126,6 +126,44 @@ echo "  prompts_used.py"
 echo "  sbatch_array_used.sh / sbatch_merge_used.sh"
 
 echo "Merge terminé."
+echo "${RUN_DIR}" > "${WORKDIR}/data/output/.last_run6_archive"
 
 echo "=== PIPELINE COMPLET ==="
 echo "Résultat final : ${MERGED_CSV}"
+
+# =============================================================================
+# COPY TO NAS — un dossier horodaté avec les résultats et prompts de chaque run
+# =============================================================================
+
+NAS_BASE="/nas/FAC/FDCA/IDHEAP/mhinterl/parp/D2c/maxime/THESIS/output"
+NAS_RUN_DIR="${NAS_BASE}/pipeline_$(date +%Y%m%d_%H%M%S)_job${ARRAY_JOB_ID}"
+
+echo "=== COPY TO NAS ==="
+echo "Destination : ${NAS_RUN_DIR}"
+
+if mkdir -p "$NAS_RUN_DIR" 2>/dev/null; then
+    for run_name in run3 run4 run4eval run5 run5eval run6; do
+        pointer="${WORKDIR}/data/output/.last_${run_name}_archive"
+        if [[ -f "$pointer" ]]; then
+            archive_dir=$(cat "$pointer")
+            echo "[NAS] ${run_name} ← ${archive_dir}"
+            for ext in parquet csv; do
+                src="${archive_dir}/results.${ext}"
+                if [[ -f "$src" ]]; then
+                    cp "$src" "${NAS_RUN_DIR}/${run_name}_results.${ext}" \
+                        && echo "  → ${run_name}_results.${ext}" || true
+                fi
+            done
+            src_prompts="${archive_dir}/prompts_used.py"
+            if [[ -f "$src_prompts" ]]; then
+                cp "$src_prompts" "${NAS_RUN_DIR}/${run_name}_prompts.py" \
+                    && echo "  → ${run_name}_prompts.py" || true
+            fi
+        else
+            echo "[NAS] WARN: pointeur manquant pour ${run_name} (${pointer})" >&2
+        fi
+    done
+    echo "=== NAS COPY DONE : ${NAS_RUN_DIR} ==="
+else
+    echo "[WARN] Impossible de créer ${NAS_RUN_DIR} — NAS non monté ?" >&2
+fi

@@ -29,6 +29,12 @@ source .venv/bin/activate
 
 mkdir -p logs
 
+ARRAY_JOB_ID=${1:-""}
+if [ -z "$ARRAY_JOB_ID" ]; then
+    echo "[ERROR] Passer le ARRAY_JOB_ID en argument: sbatch sbatch_merge_run4.sh <ARRAY_JOB_ID>" >&2
+    exit 1
+fi
+
 OUTDIR="${WORKDIR}/data/output"
 OUTBASE="${OUTDIR}/run4"
 MERGE_ID="${SLURM_JOB_ID:-$(date +%Y%m%d_%H%M%S)}"
@@ -38,7 +44,7 @@ MERGED_CSV="${OUTDIR}/run4_merged_${MERGE_ID}.csv"
 echo "=== MERGE run4 (job ${MERGE_ID}) ==="
 echo "DATE=$(date -Is)"
 
-export OUTDIR OUTBASE MERGE_ID MERGED_PARQUET MERGED_CSV
+export OUTDIR OUTBASE ARRAY_JOB_ID MERGE_ID MERGED_PARQUET MERGED_CSV
 
 python3 - <<'PYEOF'
 import sys
@@ -47,17 +53,18 @@ import glob
 import pandas as pd
 
 outbase        = os.environ["OUTBASE"]
+array_job_id   = os.environ["ARRAY_JOB_ID"]
 merged_parquet = os.environ["MERGED_PARQUET"]
 merged_csv     = os.environ["MERGED_CSV"]
 
 # ---------------------------------------------------------------------------
 # 1. Gather task outputs (YES rows only: one row per article+keyword)
 # ---------------------------------------------------------------------------
-pattern = f"{outbase}_task*.parquet"
+pattern = f"{outbase}_task*_job{array_job_id}.parquet"
 files = sorted(glob.glob(pattern))
 
 if not files:
-    pattern = f"{outbase}_task*.csv"
+    pattern = f"{outbase}_task*_job{array_job_id}.csv"
     files = sorted(glob.glob(pattern))
     if not files:
         print(f"[ERROR] Aucun fichier trouvé avec le pattern: {pattern}", file=sys.stderr)
@@ -116,6 +123,7 @@ echo "  prompts_used.py"
 echo "  sbatch_array_used.sh / sbatch_merge_used.sh"
 
 echo "Merge terminé."
+echo "${RUN_DIR}" > "${WORKDIR}/data/output/.last_run4_archive"
 
 # ── Auto-chain ─────────────────────────────────────────────────────────────────
 sbatch "${WORKDIR}/sbatch_run4eval_array.sh" "${MERGED_PARQUET}"
