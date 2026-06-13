@@ -5,7 +5,7 @@ import pandas as pd
 SYSTEM_PROMPT = ""
 
 USER_TEMPLATE = """\
-In the following article, "{keyword}" seems to be the target of criticism. If yes, tell me who expresses this criticism? If not, just say "No criticism".
+In the following article, "{keyword}" is the target of criticism. Tell me who expresses this criticism?
 
 ARTICLE:
 {article_text}\
