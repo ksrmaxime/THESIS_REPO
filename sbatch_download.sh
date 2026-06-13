@@ -36,7 +36,7 @@ mkdir -p "${TMPDIR}"
 
 python scripts/download.py \
   --start 2025-01-01 \
-  --end   2025-03-30 \
+  --end   2025-01-30 \
   --max-results 1000000 \
   --outdir data/input
 
