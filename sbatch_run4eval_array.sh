@@ -36,7 +36,7 @@ BACKEND=transformers
 # Inference
 # Entrées longues (texte d'article complet) → petit batch
 BATCH_SIZE=4
-MAX_NEW_TOKENS=5       # YES ou NO = 1 token
+MAX_NEW_TOKENS=150     # YES (1 token) ou NO + correction (~1-2 phrases)
 MAX_INPUT_TOKENS=16384
 TEMPERATURE=0.0
 

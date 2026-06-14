@@ -48,6 +48,7 @@ echo "  results.parquet"
 echo "  results.csv"
 
 # ── Auto-chain ─────────────────────────────────────────────────────────────────
+# run5eval désactivé (99% YES → inutile). On chaîne directement vers run6.
 STD_PARQUET="${OUTPUT_DIR}/results.parquet"
-sbatch "${WORKDIR}/sbatch_run5eval_array.sh" "${STD_PARQUET}"
-echo "[chain] → sbatch_run5eval_array.sh submitted (input: ${STD_PARQUET})"
+sbatch "${WORKDIR}/sbatch_run6_array.sh" "${STD_PARQUET}" "critic_answer_final"
+echo "[chain] → sbatch_run6_array.sh submitted (input: ${STD_PARQUET}, text_col: critic_answer_final)"

@@ -29,7 +29,7 @@ WORKDIR=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO
 # Input = fichier merged produit par sbatch_merge_run4.sh  ← à adapter
 INPUT=${1:-"${WORKDIR}/data/output/run4_merged_61312765.parquet"}
 OUTPUT_BASE=${WORKDIR}/data/output/run5
-TEXT_COL=critic_answer
+TEXT_COL=${2:-"critic_answer"}   # critic_answer_final quand appelé depuis merge_run4arbitre
 N_ROWS=0          # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
 
 # Model

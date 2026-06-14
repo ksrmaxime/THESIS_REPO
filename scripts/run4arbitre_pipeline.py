@@ -11,23 +11,19 @@ import pandas as pd
 
 from src.client import TransformersClient, LLMConfig
 from src.runner import run_llm_dataframe, RunConfig
-from src.run4eval_prompts import SYSTEM_PROMPT, build_user_prompt
-from src.run4eval_config import build_mask
+from src.run4arbitre_prompts import SYSTEM_PROMPT, build_user_prompt
+from src.run4arbitre_config import build_mask
 
-OUTPUT_COLS = ["run4_valid", "run4_eval_answer"]
+OUTPUT_COLS = ["arbiter_choice"]
 
 
 def parse_output(raw: str) -> dict:
     if not raw:
-        return {"run4_valid": pd.NA, "run4_eval_answer": pd.NA}
-    lines = raw.strip().splitlines()
-    first = lines[0].strip().upper()
-    if first.startswith("YES"):
-        return {"run4_valid": "YES", "run4_eval_answer": pd.NA}
-    elif first.startswith("NO"):
-        correction = "\n".join(lines[1:]).strip() if len(lines) > 1 else None
-        return {"run4_valid": "NO", "run4_eval_answer": correction if correction else pd.NA}
-    return {"run4_valid": pd.NA, "run4_eval_answer": pd.NA}
+        return {"arbiter_choice": pd.NA}
+    first = raw.strip()[0].upper()
+    if first in ("A", "B"):
+        return {"arbiter_choice": first}
+    return {"arbiter_choice": pd.NA}
 
 
 def main() -> int:
@@ -35,7 +31,7 @@ def main() -> int:
 
     # --- I/O ---
     ap.add_argument("--input",        required=True,
-                    help="Run4 merged output file (.parquet or .csv)")
+                    help="Run4eval merged output file (.parquet ou .csv)")
     ap.add_argument("--output_base",  required=True)
     ap.add_argument("--text_col",     default="text")
     ap.add_argument("--n_rows",       type=int, default=0)
@@ -102,7 +98,7 @@ def main() -> int:
 
     mask = build_mask(df, text_col=args.text_col)
     valid_count = int(mask.sum())
-    print(f"[pipeline] {len(df):,} rows in chunk → {valid_count:,} with critic_answer to validate")
+    print(f"[pipeline] {len(df):,} rows in chunk → {valid_count:,} disagreements to arbitrate")
 
     client = TransformersClient(
         LLMConfig(
@@ -153,10 +149,10 @@ def main() -> int:
     out.to_parquet(parquet_path, index=False)
     out.to_csv(csv_path, index=False)
 
-    yes_count  = int((out["run4_valid"] == "YES").sum())
-    no_count   = int((out["run4_valid"] == "NO").sum())
-    corr_count = int(out["run4_eval_answer"].notna().sum())
-    print(f"Saved: {parquet_path} | {len(out):,} rows total (run4_valid: {yes_count:,} YES / {no_count:,} NO | run4_eval_answer: {corr_count:,} filled)")
+    a_count  = int((out["arbiter_choice"] == "A").sum())
+    b_count  = int((out["arbiter_choice"] == "B").sum())
+    na_count = int(out["arbiter_choice"].isna().sum())
+    print(f"Saved: {parquet_path} | {len(out):,} rows total (arbiter_choice: {a_count:,} A / {b_count:,} B / {na_count:,} NA)")
 
     if checkpoint_path and Path(checkpoint_path).exists():
         Path(checkpoint_path).unlink()

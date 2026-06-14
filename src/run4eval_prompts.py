@@ -17,7 +17,9 @@ A previous analysis produced this description of the criticism towards "{keyword
 "{critic_answer}"
 
 Does this description accurately capture who criticises "{keyword}" in this article?
-Answer ONLY YES or NO.\
+
+If the description is accurate: answer only YES.
+If the description is inaccurate: answer NO on the first line, then on the second line write the correct one-sentence description of who criticises "{keyword}", based solely on the article.\
 """
 
 

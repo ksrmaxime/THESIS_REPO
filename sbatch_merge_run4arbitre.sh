@@ -1,11 +1,11 @@
 #!/bin/bash -l
-#SBATCH --job-name=merge_run4eval
+#SBATCH --job-name=merge_run4arbitre
 #SBATCH --partition=cpu
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
 #SBATCH --time=00:30:00
-#SBATCH --output=logs/merge_run4eval_%j.out
-#SBATCH --error=logs/merge_run4eval_%j.err
+#SBATCH --output=logs/merge_run4arbitre_%j.out
+#SBATCH --error=logs/merge_run4arbitre_%j.err
 #SBATCH --mail-user=maxime.kaiser@unil.ch
 #SBATCH --mail-type=END,FAIL
 
@@ -24,17 +24,17 @@ mkdir -p logs
 
 ARRAY_JOB_ID=${1:-""}
 if [ -z "$ARRAY_JOB_ID" ]; then
-    echo "[ERROR] Passer le ARRAY_JOB_ID en argument: sbatch sbatch_merge_run4eval.sh <ARRAY_JOB_ID>" >&2
+    echo "[ERROR] Passer le ARRAY_JOB_ID en argument: sbatch sbatch_merge_run4arbitre.sh <ARRAY_JOB_ID>" >&2
     exit 1
 fi
 
 OUTDIR="${WORKDIR}/data/output"
-OUTBASE="${OUTDIR}/run4eval"
+OUTBASE="${OUTDIR}/run4arbitre"
 MERGE_ID="${SLURM_JOB_ID:-$(date +%Y%m%d_%H%M%S)}"
-MERGED_PARQUET="${OUTDIR}/run4eval_merged_${MERGE_ID}.parquet"
-MERGED_CSV="${OUTDIR}/run4eval_merged_${MERGE_ID}.csv"
+MERGED_PARQUET="${OUTDIR}/run4arbitre_merged_${MERGE_ID}.parquet"
+MERGED_CSV="${OUTDIR}/run4arbitre_merged_${MERGE_ID}.csv"
 
-echo "=== MERGE run4eval (job ${MERGE_ID}) ==="
+echo "=== MERGE run4arbitre (job ${MERGE_ID}) ==="
 echo "DATE=$(date -Is)"
 
 export OUTDIR OUTBASE ARRAY_JOB_ID MERGE_ID MERGED_PARQUET MERGED_CSV
@@ -78,7 +78,24 @@ if not sort_cols:
 merged = merged.sort_values(sort_cols).reset_index(drop=True)
 
 # ---------------------------------------------------------------------------
-# 2. Save
+# 2. Résoudre arbiter_choice → critic_answer_final
+#    critic_answer          = réponse run4 originale (jamais modifiée)
+#    run4_eval_answer       = alternative proposée par l'évaluateur (jamais modifiée)
+#    arbiter_choice         = A ou B (la décision)
+#    critic_answer_final    = colonne résolue transmise à run5
+#      A (ou pas d'arbitrage, i.e. run4_valid == YES) → critic_answer
+#      B                                               → run4_eval_answer
+# ---------------------------------------------------------------------------
+def resolve_final_answer(row):
+    choice = str(row.get("arbiter_choice", "")).strip().upper()
+    if choice == "B" and pd.notna(row.get("run4_eval_answer")):
+        return row["run4_eval_answer"]
+    return row["critic_answer"]
+
+merged["critic_answer_final"] = merged.apply(resolve_final_answer, axis=1)
+
+# ---------------------------------------------------------------------------
+# 3. Save
 # ---------------------------------------------------------------------------
 merged.to_parquet(merged_parquet, index=False)
 merged.to_csv(merged_csv, index=False, encoding="utf-8-sig")
@@ -88,16 +105,17 @@ print(f"[merge] Trié par: {sort_cols}")
 print(f"[merge] → {merged_parquet}")
 print(f"[merge] → {merged_csv}")
 
-if "run4_valid" in merged.columns:
-    yes  = (merged["run4_valid"] == "YES").sum()
-    no   = (merged["run4_valid"] == "NO").sum()
-    na   = merged["run4_valid"].isna().sum()
-    total = len(merged)
-    print(f"\n[merge] run4_valid: {yes:,} YES / {no:,} NO / {na:,} non-traité (total {total:,})")
+if "arbiter_choice" in merged.columns:
+    a_count  = (merged["arbiter_choice"] == "A").sum()
+    b_count  = (merged["arbiter_choice"] == "B").sum()
+    na_count = merged["arbiter_choice"].isna().sum()
+    total    = len(merged)
+    print(f"\n[merge] arbiter_choice: {a_count:,} A (run4 conservé) / {b_count:,} B (correction adoptée) / {na_count:,} non-arbitré (total {total:,})")
 
-if "run4_eval_answer" in merged.columns:
-    filled = merged["run4_eval_answer"].notna().sum()
-    print(f"[merge] run4_eval_answer (correction proposée): {filled:,} remplis")
+if "critic_answer_final" in merged.columns:
+    filled = merged["critic_answer_final"].notna().sum()
+    total  = len(merged)
+    print(f"[merge] critic_answer_final rempli: {filled:,}/{total:,} ({100*filled/total:.1f}%)")
 
 PYEOF
 
@@ -105,21 +123,21 @@ PYEOF
 # ARCHIVE
 # =============================================================================
 
-RUN_DIR="${WORKDIR}/data/output/run4eval_merged_${MERGE_ID}"
+RUN_DIR="${WORKDIR}/data/output/run4arbitre_merged_${MERGE_ID}"
 mkdir -p "$RUN_DIR"
 
-cp "$MERGED_CSV"              "${RUN_DIR}/results.csv"            || true
-cp "$MERGED_PARQUET"          "${RUN_DIR}/results.parquet"        || true
-cp "src/run4eval_prompts.py"  "${RUN_DIR}/prompts_used.py"        || true
-cp "sbatch_run4eval_array.sh" "${RUN_DIR}/sbatch_array_used.sh"   || true
-cp "$0"                       "${RUN_DIR}/sbatch_merge_used.sh"   || true
+cp "$MERGED_CSV"                  "${RUN_DIR}/results.csv"            || true
+cp "$MERGED_PARQUET"              "${RUN_DIR}/results.parquet"        || true
+cp "src/run4arbitre_prompts.py"   "${RUN_DIR}/prompts_used.py"        || true
+cp "sbatch_run4arbitre_array.sh"  "${RUN_DIR}/sbatch_array_used.sh"   || true
+cp "$0"                           "${RUN_DIR}/sbatch_merge_used.sh"   || true
 
 echo "=== ARCHIVED ==="
 echo "Run folder : ${RUN_DIR}"
 
 echo "Merge terminé."
-echo "${RUN_DIR}" > "${WORKDIR}/data/output/.last_run4eval_archive"
+echo "${RUN_DIR}" > "${WORKDIR}/data/output/.last_run4arbitre_archive"
 
 # ── Auto-chain ─────────────────────────────────────────────────────────────────
-sbatch "${WORKDIR}/sbatch_run4arbitre_array.sh" "${MERGED_PARQUET}"
-echo "[chain] → sbatch_run4arbitre_array.sh submitted (input: ${MERGED_PARQUET})"
+sbatch "${WORKDIR}/sbatch_run5_array.sh" "${MERGED_PARQUET}" "critic_answer_final"
+echo "[chain] → sbatch_run5_array.sh submitted (input: ${MERGED_PARQUET}, text_col: critic_answer_final)"

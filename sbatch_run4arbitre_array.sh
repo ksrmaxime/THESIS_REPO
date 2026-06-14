@@ -1,21 +1,17 @@
 #!/bin/bash -l
-#SBATCH --job-name=run6_array
+#SBATCH --job-name=run4arbitre_array
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=48G
-#SBATCH --time=04:00:00
-#SBATCH --output=logs/run6_array_%A_%a.out
-#SBATCH --error=logs/run6_array_%A_%a.err
+#SBATCH --time=06:00:00
+#SBATCH --output=logs/run4arbitre_array_%A_%a.out
+#SBATCH --error=logs/run4arbitre_array_%A_%a.err
 #SBATCH --mail-user=maxime.kaiser@unil.ch
 #SBATCH --mail-type=END,FAIL
-#SBATCH --array=0-8   # 9 tâches (0-8) — ajuster selon le volume
+#SBATCH --array=0-8   # 9 tâches (0-8)
 
 dcsrsoft use 20241118
-
-# Trace immédiate avant tout — si cette ligne n'apparaît pas dans les logs,
-# c'est que SLURM tue le job avant même que bash ne démarre.
-echo "=== BASH STARTED — job=${SLURM_JOB_ID:-?} task=${SLURM_ARRAY_TASK_ID:-?} host=$(hostname) ===" 2>&1
 
 set -euo pipefail
 
@@ -26,11 +22,11 @@ set -euo pipefail
 WORKDIR=/work/FAC/FDCA/IDHEAP/mhinterl/parp/THESIS_REPO
 
 # I/O
-# Input = fichier merged produit par sbatch_merge_run4.sh  ← à adapter
-INPUT=${1:-"${WORKDIR}/data/output/run5_standardized_job61406977/results.parquet"}
-OUTPUT_BASE=${WORKDIR}/data/output/run6
-TEXT_COL=${2:-"critic_answer_final"}   # critic_answer pour les fichiers antérieurs à l'arbitre
-N_ROWS=0           # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
+# Input = fichier merged produit par sbatch_merge_run4eval.sh
+INPUT=${1:-"${WORKDIR}/data/output/run4eval_merged_fallback.parquet"}
+OUTPUT_BASE=${WORKDIR}/data/output/run4arbitre
+TEXT_COL=text
+N_ROWS=0          # 0 = toutes les lignes ; mettre ex. 100 pour un test rapide
 
 # Model
 MODEL_PATH=/reference/LLM/swiss-ai/Apertus-8B-Instruct-2509
@@ -38,11 +34,10 @@ DTYPE=bf16
 BACKEND=transformers
 
 # Inference
-# Les entrées sont courtes (critic_answer = quelques phrases) → batch plus grand
-# La sortie est très courte (TARGET: Person/Policy/Both/Unclear ≈ 5 tokens)
-BATCH_SIZE=8
-MAX_NEW_TOKENS=20      # TARGET: Person/Policy/Both/Unclear — très court
-MAX_INPUT_TOKENS=2048  # system prompt (~800 tokens) + user prompt (~100 tokens)
+# Entrées longues (article complet + 2 descriptions) → petit batch
+BATCH_SIZE=4
+MAX_NEW_TOKENS=2       # A ou B = 1 token
+MAX_INPUT_TOKENS=16384
 TEMPERATURE=0.0
 
 NUM_TASKS=9   # doit correspondre au nombre de tâches dans --array (0-8 = 9 tâches)
@@ -62,8 +57,8 @@ mkdir -p logs data/output
 # ── Auto-chain : task 0 soumet le merge dès le début (SLURM attend que TOUTES les tâches réussissent) ──
 if [[ "${SLURM_ARRAY_TASK_ID:-}" == "0" ]]; then
     sbatch --dependency=afterok:${SLURM_ARRAY_JOB_ID} \
-        "${WORKDIR}/sbatch_merge_run6.sh" "${SLURM_ARRAY_JOB_ID}"
-    echo "[chain] Submitted sbatch_merge_run6.sh (dependency: afterok:${SLURM_ARRAY_JOB_ID})"
+        "${WORKDIR}/sbatch_merge_run4arbitre.sh" "${SLURM_ARRAY_JOB_ID}"
+    echo "[chain] Submitted sbatch_merge_run4arbitre.sh (dependency: afterok:${SLURM_ARRAY_JOB_ID})"
 fi
 
 echo "=== SLURM ARRAY ==="
@@ -79,7 +74,7 @@ echo "TEXT_COL=${TEXT_COL} | NUM_TASKS=${NUM_TASKS} | TASK=${SLURM_ARRAY_TASK_ID
 echo "MODEL=${MODEL_PATH} | DTYPE=${DTYPE} | BACKEND=${BACKEND}"
 echo "BATCH=${BATCH_SIZE} | MAX_NEW_TOKENS=${MAX_NEW_TOKENS} | MAX_INPUT_TOKENS=${MAX_INPUT_TOKENS} | TEMP=${TEMPERATURE}"
 
-python scripts/run6_pipeline.py \
+python scripts/run4arbitre_pipeline.py \
   --input             "$INPUT" \
   --output_base       "$OUTPUT_BASE" \
   --text_col          "$TEXT_COL" \

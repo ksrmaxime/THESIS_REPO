@@ -47,6 +47,14 @@ case "$STEP" in
     fi
     echo "Pipeline lancé depuis : run4  (array job ${JOB_ID})"
     ;;
+  run4arbitre)
+    if [[ -n "$INPUT" ]]; then
+        JOB_ID=$(sbatch --parsable "${WORKDIR}/sbatch_run4arbitre_array.sh" "$INPUT")
+    else
+        JOB_ID=$(sbatch --parsable "${WORKDIR}/sbatch_run4arbitre_array.sh")
+    fi
+    echo "Pipeline lancé depuis : run4arbitre  (array job ${JOB_ID})"
+    ;;
   run5)
     if [[ -n "$INPUT" ]]; then
         JOB_ID=$(sbatch --parsable "${WORKDIR}/sbatch_run5_array.sh" "$INPUT")
@@ -73,7 +81,7 @@ case "$STEP" in
     ;;
   *)
     echo "Étape inconnue : '$STEP'"
-    echo "Étapes valides : download | tag | run3 | run4 | run5 | standardize | run6"
+    echo "Étapes valides : download | tag | run3 | run4 | run4arbitre | run5 | standardize | run6"
     exit 1
     ;;
 esac
