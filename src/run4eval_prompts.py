@@ -18,8 +18,8 @@ A previous analysis produced this description of the criticism towards "{keyword
 
 Does this description accurately capture who criticises "{keyword}" in this article?
 
-If the description is accurate: answer only YES.
-If the description is inaccurate: answer NO on the first line, then on the second line write the correct one-sentence description of who criticises "{keyword}", based solely on the article.\
+Answer YES or NO on the first line.
+On the second line, briefly explain why this description is correct or incorrect, based solely on the article.\
 """
 
 

@@ -78,18 +78,20 @@ if not sort_cols:
 merged = merged.sort_values(sort_cols).reset_index(drop=True)
 
 # ---------------------------------------------------------------------------
-# 2. Résoudre arbiter_choice → critic_answer_final
-#    critic_answer          = réponse run4 originale (jamais modifiée)
-#    run4_eval_answer       = alternative proposée par l'évaluateur (jamais modifiée)
-#    arbiter_choice         = A ou B (la décision)
-#    critic_answer_final    = colonne résolue transmise à run5
-#      A (ou pas d'arbitrage, i.e. run4_valid == YES) → critic_answer
-#      B                                               → run4_eval_answer
+# 2. Résoudre → critic_answer_final
+#    critic_answer             = réponse run4 originale (jamais modifiée)
+#    run4_eval_justification   = description indépendante de l'évaluateur (jamais modifiée)
+#    arbiter_answer            = description synthétisée par l'arbitre (seulement si NO)
+#    critic_answer_final       = colonne résolue transmise à run5
+#      run4_valid == YES  → critic_answer (validé directement)
+#      run4_valid == NO   → arbiter_answer (synthèse de l'arbitre)
+#      fallback           → critic_answer
 # ---------------------------------------------------------------------------
 def resolve_final_answer(row):
-    choice = str(row.get("arbiter_choice", "")).strip().upper()
-    if choice == "B" and pd.notna(row.get("run4_eval_answer")):
-        return row["run4_eval_answer"]
+    if str(row.get("run4_valid", "")).strip().upper() == "NO":
+        val = row.get("arbiter_answer", None)
+        if val is not None and not pd.isna(val) and str(val).strip():
+            return str(val).strip()
     return row["critic_answer"]
 
 merged["critic_answer_final"] = merged.apply(resolve_final_answer, axis=1)
@@ -105,12 +107,11 @@ print(f"[merge] Trié par: {sort_cols}")
 print(f"[merge] → {merged_parquet}")
 print(f"[merge] → {merged_csv}")
 
-if "arbiter_choice" in merged.columns:
-    a_count  = (merged["arbiter_choice"] == "A").sum()
-    b_count  = (merged["arbiter_choice"] == "B").sum()
-    na_count = merged["arbiter_choice"].isna().sum()
+if "arbiter_answer" in merged.columns:
+    filled   = merged["arbiter_answer"].notna().sum()
+    na_count = merged["arbiter_answer"].isna().sum()
     total    = len(merged)
-    print(f"\n[merge] arbiter_choice: {a_count:,} A (run4 conservé) / {b_count:,} B (correction adoptée) / {na_count:,} non-arbitré (total {total:,})")
+    print(f"\n[merge] arbiter_answer: {filled:,} synthèses générées / {na_count:,} non-arbitré (total {total:,})")
 
 if "critic_answer_final" in merged.columns:
     filled = merged["critic_answer_final"].notna().sum()

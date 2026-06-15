@@ -14,20 +14,25 @@ from src.runner import run_llm_dataframe, RunConfig
 from src.run4eval_prompts import SYSTEM_PROMPT, build_user_prompt
 from src.run4eval_config import build_mask
 
-OUTPUT_COLS = ["run4_valid", "run4_eval_answer"]
+OUTPUT_COLS = ["run4_valid", "run4_eval_justification"]
 
 
 def parse_output(raw: str) -> dict:
+    empty = {"run4_valid": pd.NA, "run4_eval_justification": pd.NA}
     if not raw:
-        return {"run4_valid": pd.NA, "run4_eval_answer": pd.NA}
+        return empty
     lines = raw.strip().splitlines()
     first = lines[0].strip().upper()
     if first.startswith("YES"):
-        return {"run4_valid": "YES", "run4_eval_answer": pd.NA}
+        valid = "YES"
     elif first.startswith("NO"):
-        correction = "\n".join(lines[1:]).strip() if len(lines) > 1 else None
-        return {"run4_valid": "NO", "run4_eval_answer": correction if correction else pd.NA}
-    return {"run4_valid": pd.NA, "run4_eval_answer": pd.NA}
+        valid = "NO"
+    else:
+        return empty
+    justification = "\n".join(lines[1:]).strip() if len(lines) > 1 else pd.NA
+    if isinstance(justification, str) and not justification:
+        justification = pd.NA
+    return {"run4_valid": valid, "run4_eval_justification": justification}
 
 
 def main() -> int:
@@ -155,8 +160,8 @@ def main() -> int:
 
     yes_count  = int((out["run4_valid"] == "YES").sum())
     no_count   = int((out["run4_valid"] == "NO").sum())
-    corr_count = int(out["run4_eval_answer"].notna().sum())
-    print(f"Saved: {parquet_path} | {len(out):,} rows total (run4_valid: {yes_count:,} YES / {no_count:,} NO | run4_eval_answer: {corr_count:,} filled)")
+    just_count = int(out["run4_eval_justification"].notna().sum())
+    print(f"Saved: {parquet_path} | {len(out):,} rows total (run4_valid: {yes_count:,} YES / {no_count:,} NO | run4_eval_justification: {just_count:,} filled)")
 
     if checkpoint_path and Path(checkpoint_path).exists():
         Path(checkpoint_path).unlink()

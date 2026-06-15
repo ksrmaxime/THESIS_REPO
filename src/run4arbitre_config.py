@@ -4,13 +4,13 @@ import pandas as pd
 
 
 def build_mask(df: pd.DataFrame, *, text_col: str) -> pd.Series:
-    """Process only rows where run4_eval said NO and proposed a correction."""
-    has_text         = df[text_col].notna() & (df[text_col].str.strip() != "")
-    is_no            = df["run4_valid"].astype(str).str.strip().str.upper() == "NO"
-    has_eval_answer  = df["run4_eval_answer"].notna() & (df["run4_eval_answer"].str.strip() != "")
-    already          = (
-        df["arbiter_choice"].notna()
-        if "arbiter_choice" in df.columns
+    """Process only NO rows that have an evaluator justification to synthesize from."""
+    has_critic    = df["critic_answer"].notna() & (df["critic_answer"].str.strip() != "")
+    is_no         = df["run4_valid"].astype(str).str.strip().str.upper() == "NO"
+    has_eval_just = df["run4_eval_justification"].notna() & (df["run4_eval_justification"].str.strip() != "")
+    already       = (
+        df["arbiter_answer"].notna()
+        if "arbiter_answer" in df.columns
         else pd.Series(False, index=df.index)
     )
-    return has_text & is_no & has_eval_answer & ~already
+    return has_critic & is_no & has_eval_just & ~already

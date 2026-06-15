@@ -14,16 +14,14 @@ from src.runner import run_llm_dataframe, RunConfig
 from src.run4arbitre_prompts import SYSTEM_PROMPT, build_user_prompt
 from src.run4arbitre_config import build_mask
 
-OUTPUT_COLS = ["arbiter_choice"]
+OUTPUT_COLS = ["arbiter_answer"]
 
 
 def parse_output(raw: str) -> dict:
     if not raw:
-        return {"arbiter_choice": pd.NA}
-    first = raw.strip()[0].upper()
-    if first in ("A", "B"):
-        return {"arbiter_choice": first}
-    return {"arbiter_choice": pd.NA}
+        return {"arbiter_answer": pd.NA}
+    text = raw.strip()
+    return {"arbiter_answer": text if text else pd.NA}
 
 
 def main() -> int:
@@ -98,7 +96,7 @@ def main() -> int:
 
     mask = build_mask(df, text_col=args.text_col)
     valid_count = int(mask.sum())
-    print(f"[pipeline] {len(df):,} rows in chunk → {valid_count:,} disagreements to arbitrate")
+    print(f"[pipeline] {len(df):,} rows in chunk → {valid_count:,} NO rows to synthesize")
 
     client = TransformersClient(
         LLMConfig(
@@ -149,10 +147,9 @@ def main() -> int:
     out.to_parquet(parquet_path, index=False)
     out.to_csv(csv_path, index=False)
 
-    a_count  = int((out["arbiter_choice"] == "A").sum())
-    b_count  = int((out["arbiter_choice"] == "B").sum())
-    na_count = int(out["arbiter_choice"].isna().sum())
-    print(f"Saved: {parquet_path} | {len(out):,} rows total (arbiter_choice: {a_count:,} A / {b_count:,} B / {na_count:,} NA)")
+    filled_count = int(out["arbiter_answer"].notna().sum())
+    na_count     = int(out["arbiter_answer"].isna().sum())
+    print(f"Saved: {parquet_path} | {len(out):,} rows total (arbiter_answer: {filled_count:,} filled / {na_count:,} NA)")
 
     if checkpoint_path and Path(checkpoint_path).exists():
         Path(checkpoint_path).unlink()

@@ -35,9 +35,9 @@ BACKEND=transformers
 
 # Inference
 # Entrées longues (article complet + 2 descriptions) → petit batch
-BATCH_SIZE=4
-MAX_NEW_TOKENS=2       # A ou B = 1 token
-MAX_INPUT_TOKENS=16384
+BATCH_SIZE=8
+MAX_NEW_TOKENS=100     # description finale synthétisée (~1-2 phrases)
+MAX_INPUT_TOKENS=512   # system prompt + deux descriptions courtes, pas d'article
 TEMPERATURE=0.0
 
 NUM_TASKS=9   # doit correspondre au nombre de tâches dans --array (0-8 = 9 tâches)

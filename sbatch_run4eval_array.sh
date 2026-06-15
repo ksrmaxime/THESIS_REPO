@@ -1,4 +1,4 @@
-#!/bin/bash -l
+u#!/bin/bash -l
 #SBATCH --job-name=run4eval_array
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
@@ -36,7 +36,7 @@ BACKEND=transformers
 # Inference
 # Entrées longues (texte d'article complet) → petit batch
 BATCH_SIZE=4
-MAX_NEW_TOKENS=150     # YES (1 token) ou NO + correction (~1-2 phrases)
+MAX_NEW_TOKENS=150     # YOUR DESCRIPTION (~1 phrase) + VERDICT (YES/NO)
 MAX_INPUT_TOKENS=16384
 TEMPERATURE=0.0
 

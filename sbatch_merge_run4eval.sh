@@ -95,9 +95,9 @@ if "run4_valid" in merged.columns:
     total = len(merged)
     print(f"\n[merge] run4_valid: {yes:,} YES / {no:,} NO / {na:,} non-traité (total {total:,})")
 
-if "run4_eval_answer" in merged.columns:
-    filled = merged["run4_eval_answer"].notna().sum()
-    print(f"[merge] run4_eval_answer (correction proposée): {filled:,} remplis")
+if "run4_eval_justification" in merged.columns:
+    filled = merged["run4_eval_justification"].notna().sum()
+    print(f"[merge] run4_eval_justification (description indépendante): {filled:,} remplis")
 
 PYEOF
 
