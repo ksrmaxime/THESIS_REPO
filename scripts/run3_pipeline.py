@@ -105,8 +105,22 @@ def main() -> int:
 
     # --- Load or create exploded df ---
     if Path(exploded_checkpoint).exists():
-        print(f"[resume] Loading exploded checkpoint: {exploded_checkpoint}", flush=True)
-        exploded = pd.read_parquet(exploded_checkpoint)
+        ckpt = pd.read_parquet(exploded_checkpoint)
+        expected = explode_by_keyword(df, mask)
+        ckpt_keys = set(zip(ckpt["__orig_idx__"], ckpt["keyword"]))
+        expected_keys = set(zip(expected["__orig_idx__"], expected["keyword"]))
+        if ckpt_keys != expected_keys:
+            print(
+                f"[resume] Exploded checkpoint mismatch "
+                f"(checkpoint={len(ckpt_keys)} pairs, expected={len(expected_keys)}) — ignoring stale checkpoint.",
+                flush=True,
+            )
+            Path(exploded_checkpoint).unlink()
+            exploded = expected
+            exploded["keyword_answer"] = pd.Series(pd.NA, index=exploded.index, dtype="string")
+        else:
+            print(f"[resume] Loading exploded checkpoint: {exploded_checkpoint}", flush=True)
+            exploded = ckpt
     else:
         exploded = explode_by_keyword(df, mask)
         exploded["keyword_answer"] = pd.Series(pd.NA, index=exploded.index, dtype="string")

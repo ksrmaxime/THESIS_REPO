@@ -81,6 +81,8 @@ def main() -> int:
         )
         df = df.iloc[start:end].copy()
 
+    expected_indices = set(df.index)
+
     yes_count = int(build_mask(df, text_col=args.text_col).sum())
     print(f"[pipeline] {len(df):,} rows in chunk → {yes_count:,} with keyword_answer=YES (will be sent to LLM)")
 
@@ -90,10 +92,19 @@ def main() -> int:
     else:
         checkpoint_path = args.output_base + "_checkpoint.parquet"
 
-    # --- Resume from checkpoint if it exists ---
+    # --- Resume from checkpoint if it exists (validated against current input/chunking) ---
     if Path(checkpoint_path).exists():
-        print(f"[resume] Loading checkpoint: {checkpoint_path}", flush=True)
-        df = pd.read_parquet(checkpoint_path)
+        ckpt = pd.read_parquet(checkpoint_path)
+        if set(ckpt.index) != expected_indices:
+            print(
+                f"[resume] Checkpoint index mismatch "
+                f"(checkpoint={len(ckpt)} rows, expected={len(expected_indices)}) — ignoring stale checkpoint.",
+                flush=True,
+            )
+            Path(checkpoint_path).unlink()
+        else:
+            print(f"[resume] Loading checkpoint: {checkpoint_path}", flush=True)
+            df = ckpt
 
     # --- LLM client ---
     client = TransformersClient(

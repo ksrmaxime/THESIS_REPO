@@ -77,28 +77,46 @@ def main() -> int:
     if task_id is not None:
         checkpoint_path = args.output_base + f"_task{task_id}_checkpoint.parquet"
 
-    if checkpoint_path and Path(checkpoint_path).exists():
-        print(f"[resume] Loading checkpoint: {checkpoint_path}", flush=True)
-        df = pd.read_parquet(checkpoint_path)
+    # Load + chunk first so any checkpoint can be validated against current parameters.
+    full_df = (pd.read_parquet(args.input)
+               if args.input.endswith(".parquet")
+               else pd.read_csv(args.input, low_memory=False))
+
+    if args.n_rows > 0:
+        full_df = full_df.head(args.n_rows).copy()
+        print(f"[n_rows] Subsetting to first {args.n_rows} rows")
+
+    if task_id is not None and num_tasks is not None:
+        chunk_size = math.ceil(len(full_df) / num_tasks)
+        start = task_id * chunk_size
+        end   = min(start + chunk_size, len(full_df))
+        expected_indices = set(full_df.index[start:end])
     else:
-        df = (pd.read_parquet(args.input)
-              if args.input.endswith(".parquet")
-              else pd.read_csv(args.input, low_memory=False))
+        expected_indices = None
 
-        if args.n_rows > 0:
-            df = df.head(args.n_rows).copy()
-            print(f"[n_rows] Subsetting to first {args.n_rows} rows")
-
+    if checkpoint_path and Path(checkpoint_path).exists():
+        ckpt = pd.read_parquet(checkpoint_path)
+        if expected_indices is not None and set(ckpt.index) != expected_indices:
+            print(
+                f"[resume] Checkpoint index mismatch "
+                f"(checkpoint={len(ckpt)} rows, expected={len(expected_indices)}) — ignoring stale checkpoint.",
+                flush=True,
+            )
+            Path(checkpoint_path).unlink()
+            df = full_df.iloc[start:end].copy() if expected_indices is not None else full_df.copy()
+        else:
+            print(f"[resume] Loading checkpoint: {checkpoint_path}", flush=True)
+            df = ckpt
+    else:
         if task_id is not None and num_tasks is not None:
-            chunk_size = math.ceil(len(df) / num_tasks)
-            start = task_id * chunk_size
-            end   = min(start + chunk_size, len(df))
             print(
                 f"[pipeline] Array task {task_id}/{num_tasks} — "
                 f"rows {start}:{end} ({end - start} rows)",
                 flush=True,
             )
-            df = df.iloc[start:end].copy()
+            df = full_df.iloc[start:end].copy()
+        else:
+            df = full_df.copy()
 
     for col in OUTPUT_COLS:
         if col not in df.columns:

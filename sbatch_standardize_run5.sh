@@ -3,7 +3,7 @@
 #SBATCH --partition=cpu
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=8G
-#SBATCH --time=00:15:00
+#SBATCH --time=01:00:00
 #SBATCH --output=logs/std_run5_%j.out
 #SBATCH --error=logs/std_run5_%j.err
 #SBATCH --mail-user=maxime.kaiser@unil.ch
