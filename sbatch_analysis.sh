@@ -12,14 +12,15 @@
 dcsrsoft use 20241118
 
 # Usage:
-#   sbatch sbatch_analysis.sh [<run6_merged_results.parquet>] [<granularity>] [<crisis_k>]
+#   sbatch sbatch_analysis.sh [<run6_merged_results.parquet>] [<granularity>] [<crisis_k>] [<transition_window_months>]
 #
 # If the input path is omitted, falls back to the run6 archive pointer left
 # by sbatch_merge_run6.sh (data/output/.last_run6_archive).
 #
 # Final, purely-CPU stage of the pipeline: descriptive stats, temporal
-# evolution, source/target/content cross-tabs, partisan alignment (E3) and
-# crisis/peak detection (E4). No GPU, no LLM calls.
+# evolution, source/target/content cross-tabs, partisan alignment (E3),
+# minister party-change event study, and crisis/peak detection (E4).
+# No GPU, no LLM calls.
 
 set -euo pipefail
 
@@ -35,6 +36,7 @@ mkdir -p logs
 INPUT=${1:-""}
 GRANULARITY=${2:-"M"}
 CRISIS_K=${3:-"2.0"}
+TRANSITION_WINDOW_MONTHS=${4:-"6"}
 
 if [[ -z "$INPUT" ]]; then
     POINTER="${WORKDIR}/data/output/.last_run6_archive"
@@ -43,7 +45,7 @@ if [[ -z "$INPUT" ]]; then
         echo "[INFO] Pas d'input fourni — utilisation du dernier run6 archivé: ${INPUT}"
     else
         echo "[ERROR] Pas d'input fourni et aucun pointeur ${POINTER} trouvé." >&2
-        echo "[ERROR] Usage: sbatch sbatch_analysis.sh <run6_merged_results.parquet> [granularity] [crisis_k]" >&2
+        echo "[ERROR] Usage: sbatch sbatch_analysis.sh <run6_merged_results.parquet> [granularity] [crisis_k] [transition_window_months]" >&2
         exit 1
     fi
 fi
@@ -60,13 +62,14 @@ echo "=== ANALYSIS (job ${JOB_ID}) ==="
 echo "DATE=$(date -Is)"
 echo "INPUT=${INPUT}"
 echo "OUTPUT_DIR=${OUT_DIR}"
-echo "GRANULARITY=${GRANULARITY} | CRISIS_K=${CRISIS_K}"
+echo "GRANULARITY=${GRANULARITY} | CRISIS_K=${CRISIS_K} | TRANSITION_WINDOW_MONTHS=${TRANSITION_WINDOW_MONTHS}"
 
 python3 scripts/run_analysis.py \
     --input        "$INPUT" \
     --output_dir   "$OUT_DIR" \
     --granularity  "$GRANULARITY" \
-    --crisis_k     "$CRISIS_K"
+    --crisis_k     "$CRISIS_K" \
+    --transition_window_months "$TRANSITION_WINDOW_MONTHS"
 
 cp "$0"               "${OUT_DIR}/sbatch_used.sh"            || true
 cp "scripts/run_analysis.py" "${OUT_DIR}/run_analysis_used.py" || true
@@ -75,7 +78,7 @@ cp "src/analysis_config.py"  "${OUT_DIR}/analysis_config_used.py" || true
 echo "=== DONE ==="
 echo "Output folder: ${OUT_DIR}"
 echo "  analysis_report.md"
-echo "  descriptive/ temporal/ crosstabs/ partisan_alignment/ crisis/"
+echo "  descriptive/ temporal/ crosstabs/ partisan_alignment/ minister_transitions/ crisis/"
 
 echo "${OUT_DIR}" > "${WORKDIR}/data/output/.last_analysis_archive"
 

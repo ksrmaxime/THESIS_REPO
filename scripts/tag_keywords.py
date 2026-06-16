@@ -332,9 +332,18 @@ def main() -> None:
             sys.exit(0)
 
     print(f"[tag_keywords] Processing {len(files)} file(s) …")
+    last_dst = None
     for src in files:
         dst = resolve_output_path(src, args.outdir)
         process_file(src, dst)
+        last_dst = dst
+
+    if last_dst is not None:
+        pointer_dir = args.outdir if args.outdir is not None else last_dst.parent
+        pointer_dir.mkdir(parents=True, exist_ok=True)
+        pointer_path = pointer_dir / ".last_tagged"
+        pointer_path.write_text(str(last_dst), encoding="utf-8")
+        print(f"[tag_keywords] pointer → {pointer_path} (-> {last_dst})")
 
     print("[tag_keywords] Done.")
 

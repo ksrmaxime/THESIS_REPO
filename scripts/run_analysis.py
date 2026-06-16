@@ -8,13 +8,19 @@ produces, under --output_dir:
 
   descriptive/      basic counts and target / source / content-type shares
   temporal/         monthly (or --granularity) evolution of the above
-  crosstabs/        composition of target_type / content_type by source
-                     category (parliamentary party, federal councillor,
-                     interest group, civil servant, general public, and
+  crosstabs/        composition of target_type / content_type / detailed
+                     target entity (keyword) by source category
+                     (parliamentary party, federal councillor, interest
+                     group, civil servant, general public, and
                      federal-department-as-source), plus the E2 party x
                      content-bucket table
   partisan_alignment/   E3 — critic party vs. the targeted department's
                          minister's party at publication time
+  minister_transitions/  federal-council reshuffles that change the party
+                         in charge of a department: source/party/content
+                         composition in the months before vs. after each
+                         transition (pooled + per-event), see
+                         --transition_window_months
   crisis/           E4 — per-department(+minister) peak detection
                      (threshold = mean + crisis_k * std) and crisis-vs-
                      routine composition comparison
@@ -22,7 +28,8 @@ produces, under --output_dir:
 
 Usage:
     python scripts/run_analysis.py --input <run6_merged/results.parquet> \\
-        --output_dir <dir> [--granularity M] [--crisis_k 2.0]
+        --output_dir <dir> [--granularity M] [--crisis_k 2.0] \\
+        [--transition_window_months 6]
 
 Note on terminology: the run6 pipeline stage names its output column
 "criticism_target" but its values (Person/Policy/Both/Unclear) correspond
@@ -35,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import textwrap
 import warnings
 from pathlib import Path
 
@@ -54,6 +62,7 @@ from src.analysis_config import (
     DEPARTMENT_CODES,
     DEPT_LABELS,
     FAR_RIGHT_PARTIES,
+    build_minister_transitions,
     classify_keyword,
     minister_for_canonical_dept,
     parse_source_token,
@@ -130,11 +139,11 @@ def multi_line_chart(df_counts: pd.DataFrame, title: str, path: Path) -> None:
 def bar_chart_grouped(df_pct: pd.DataFrame, title: str, path: Path) -> None:
     if df_pct.empty:
         return
-    fig, ax = plt.subplots(figsize=(8, 0.5 * len(df_pct) + 2))
+    fig, ax = plt.subplots(figsize=(9, 0.5 * len(df_pct) + 2.5))
     df_pct.plot(kind="barh", stacked=True, ax=ax)
     ax.set_xlabel("%")
-    ax.set_title(title)
-    ax.legend(fontsize=8)
+    ax.set_title("\n".join(textwrap.wrap(title, width=75)), fontsize=10)
+    ax.legend(fontsize=8, loc="upper left", bbox_to_anchor=(1.0, 1.0))
     fig.tight_layout()
     fig.savefig(path, dpi=150)
     plt.close(fig)
@@ -165,10 +174,17 @@ def heatmap(df_pct: pd.DataFrame, title: str, path: Path) -> None:
 
 
 def crosstab_with_heatmap(df: pd.DataFrame, row_col: str, col_col: str,
-                            out_csv: Path, out_png: Path, title: str) -> pd.DataFrame:
+                            out_csv: Path, out_png: Path, title: str,
+                            max_cols: int | None = None) -> pd.DataFrame:
     ct_pct = pd.crosstab(df[row_col], df[col_col], normalize="index") * 100
     ct_pct.to_csv(out_csv)
-    heatmap(ct_pct, title, out_png)
+    ct_for_plot = ct_pct
+    if max_cols is not None and ct_pct.shape[1] > max_cols:
+        ct_counts = pd.crosstab(df[row_col], df[col_col])
+        top_cols = ct_counts.sum(axis=0).sort_values(ascending=False).head(max_cols).index
+        ct_for_plot = ct_pct[top_cols]
+        title = f"{title} (top {max_cols})"
+    heatmap(ct_for_plot, title, out_png)
     return ct_pct
 
 
@@ -372,15 +388,24 @@ def run_crosstabs(df_source: pd.DataFrame, out_dir: Path) -> dict:
         if eff_group_col is None:
             subset["_group"] = broad_value
             eff_group_col = "_group"
-        for target_col in ["target_type", "content_type"]:
+        # target_type/content_type have few categories (no truncation needed); "keyword" is
+        # the detailed target entity (department/admin unit/agency/minister name) and can run
+        # into the hundreds, so its heatmap is capped to the most frequently targeted entities
+        # — the full, untruncated breakdown is always written to CSV.
+        for target_col, out_label, max_cols in [
+            ("target_type", "target_type", None),
+            ("content_type", "content_type", None),
+            ("keyword", "target_entity", 20),
+        ]:
             subset_valid = subset[subset[target_col].notna()]
             if subset_valid.empty:
                 continue
-            out_csv = out_dir / f"{fname}__{target_col}.csv"
-            out_png = out_dir / f"{fname}__{target_col}.png"
+            out_csv = out_dir / f"{fname}__{out_label}.csv"
+            out_png = out_dir / f"{fname}__{out_label}.png"
             crosstab_with_heatmap(
                 subset_valid, eff_group_col, target_col, out_csv, out_png,
-                title=f"{broad_value} → composition par {target_col}",
+                title=f"{broad_value} → composition par {out_label}",
+                max_cols=max_cols,
             )
         summary[fname] = {"n": len(subset), "n_groups": subset[eff_group_col].nunique()}
 
@@ -467,6 +492,131 @@ def run_partisan_alignment(df_source: pd.DataFrame, out_dir: Path) -> dict:
         "chi2_by_department": chi2,
         "chi2_p_by_department": p,
         "by_dept_table": by_dept,
+    }
+
+
+# =============================================================================
+# Section 4bis — minister party-change event study
+# =============================================================================
+
+def run_minister_transitions(df_crit: pd.DataFrame, df_source: pd.DataFrame,
+                              out_dir: Path, window_months: int) -> dict:
+    """For every federal-council reshuffle that changes the party in charge of a
+    department, compare the composition of critique sources in the months
+    immediately before vs. after the transition (event-study style, windows
+    pooled across all transitions for statistical power, plus one breakdown
+    per individual transition for inspection).
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    all_transitions = pd.DataFrame(build_minister_transitions())
+    if all_transitions.empty:
+        return {"n_party_changes_total": 0, "n_party_changes_in_range": 0}
+    all_transitions.to_csv(out_dir / "all_minister_transitions.csv", index=False)
+
+    party_changes = all_transitions[all_transitions["is_party_change"]] \
+        .sort_values(["parent_dept", "transition_date"]).reset_index(drop=True)
+
+    base = df_crit[df_crit["target_type"].isin(["Department", "Minister"]) & df_crit["parent_dept"].notna()]
+    base_source = df_source[df_source["target_type"].isin(["Department", "Minister"]) & df_source["parent_dept"].notna()]
+
+    if base.empty or party_changes.empty:
+        return {"n_party_changes_total": len(party_changes), "n_party_changes_in_range": 0}
+
+    data_min, data_max = base["pubtime"].min(), base["pubtime"].max()
+    window = pd.DateOffset(months=window_months)
+
+    per_event_rows = []
+    pooled_before_ids: set = set()
+    pooled_after_ids: set = set()
+
+    for _, row in party_changes.iterrows():
+        dept = row["parent_dept"]
+        t = pd.Timestamp(row["transition_date"])
+        if t < data_min - window or t > data_max + window:
+            continue
+
+        dept_mask = base["parent_dept"] == dept
+        before_ids = set(base.loc[dept_mask & (base["pubtime"] >= t - window) & (base["pubtime"] < t), "critique_id"])
+        after_ids = set(base.loc[dept_mask & (base["pubtime"] >= t) & (base["pubtime"] < t + window), "critique_id"])
+
+        per_event_rows.append({
+            "parent_dept": dept, "transition_date": t.date(),
+            "old_councillor": row["old_councillor"], "new_councillor": row["new_councillor"],
+            "old_party": row["old_party"], "new_party": row["new_party"],
+            "n_critiques_before": len(before_ids), "n_critiques_after": len(after_ids),
+        })
+        pooled_before_ids |= before_ids
+        pooled_after_ids |= after_ids
+
+        ev_source = base_source[base_source["critique_id"].isin(before_ids | after_ids)].copy()
+        parl_ev = ev_source[(ev_source["source_broad"] == "Parliamentary") & ev_source["party"].notna()]
+        if not parl_ev.empty:
+            parl_ev = parl_ev.copy()
+            parl_ev["regime"] = np.where(parl_ev["critique_id"].isin(after_ids), "après", "avant")
+            ct = pd.crosstab(parl_ev["regime"], parl_ev["party"], normalize="index") * 100
+            fstem = f"event_{dept.replace('/', '-')}_{t.date()}"
+            ct.to_csv(out_dir / f"{fstem}__party.csv")
+            bar_chart_grouped(
+                ct,
+                f"{DEPT_LABELS.get(dept, dept)} — {row['old_councillor']} ({row['old_party']}) → "
+                f"{row['new_councillor']} ({row['new_party']}), {t.date()}",
+                out_dir / f"{fstem}__party.png",
+            )
+
+    per_event_df = pd.DataFrame(per_event_rows)
+    per_event_df.to_csv(out_dir / "party_change_events.csv", index=False)
+
+    if not pooled_before_ids and not pooled_after_ids:
+        return {
+            "window_months": window_months,
+            "n_party_changes_total": len(party_changes),
+            "n_party_changes_in_range": len(per_event_df),
+            "n_critiques_pooled_before": 0,
+            "n_critiques_pooled_after": 0,
+        }
+
+    pooled_source = base_source[base_source["critique_id"].isin(pooled_before_ids | pooled_after_ids)].copy()
+    pooled_source["regime"] = np.where(pooled_source["critique_id"].isin(pooled_after_ids), "après", "avant")
+
+    source_ct_counts = pd.crosstab(pooled_source["regime"], pooled_source["source_broad"])
+    source_ct_pct = pd.crosstab(pooled_source["regime"], pooled_source["source_broad"], normalize="index") * 100
+    source_ct_pct.to_csv(out_dir / "pooled_source_composition.csv")
+    bar_chart_grouped(source_ct_pct, "Composition des sources, avant/après changement de parti au ministère",
+                       out_dir / "pooled_source_composition.png")
+    chi2_source, p_source = safe_chi2(source_ct_counts)
+
+    parl_pooled = pooled_source[(pooled_source["source_broad"] == "Parliamentary") & pooled_source["party"].notna()]
+    party_ct_counts = pd.crosstab(parl_pooled["regime"], parl_pooled["party"])
+    party_ct_pct = pd.crosstab(parl_pooled["regime"], parl_pooled["party"], normalize="index") * 100
+    party_ct_pct.to_csv(out_dir / "pooled_parliamentary_party_composition.csv")
+    bar_chart_grouped(party_ct_pct, "Composition partisane des sources parlementaires, avant/après changement de parti",
+                       out_dir / "pooled_parliamentary_party_composition.png")
+    chi2_party, p_party = safe_chi2(party_ct_counts)
+
+    base_with_regime = base[base["critique_id"].isin(pooled_before_ids | pooled_after_ids)].copy()
+    base_with_regime["regime"] = np.where(base_with_regime["critique_id"].isin(pooled_after_ids), "après", "avant")
+    content_ct_counts = pd.crosstab(base_with_regime["regime"], base_with_regime["content_type"])
+    content_ct_pct = pd.crosstab(base_with_regime["regime"], base_with_regime["content_type"], normalize="index") * 100
+    content_ct_pct.to_csv(out_dir / "pooled_content_composition.csv")
+    chi2_content, p_content = safe_chi2(content_ct_counts)
+
+    print(f"[transitions] {len(party_changes)} changement(s) de parti au total, "
+          f"{len(per_event_df)} dans la période couverte par les données")
+
+    return {
+        "window_months": window_months,
+        "n_party_changes_total": len(party_changes),
+        "n_party_changes_in_range": len(per_event_df),
+        "n_critiques_pooled_before": len(pooled_before_ids),
+        "n_critiques_pooled_after": len(pooled_after_ids),
+        "chi2_source": chi2_source, "chi2_source_p": p_source,
+        "chi2_party": chi2_party, "chi2_party_p": p_party,
+        "chi2_content": chi2_content, "chi2_content_p": p_content,
+        "source_ct_pct": source_ct_pct,
+        "party_ct_pct": party_ct_pct,
+        "content_ct_pct": content_ct_pct,
+        "per_event_table": per_event_df,
     }
 
 
@@ -582,6 +732,7 @@ def write_report(path: Path, args: argparse.Namespace, sections: dict) -> None:
     temporal = sections["temporal"]
     crosstabs = sections["crosstabs"]
     alignment = sections["alignment"]
+    transitions = sections["transitions"]
     crisis = sections["crisis"]
 
     lines: list[str] = []
@@ -654,6 +805,36 @@ def write_report(path: Path, args: argparse.Namespace, sections: dict) -> None:
         lines.append("_Pas assez de données pour tester l'alignement partisan._")
     lines.append("")
 
+    lines.append("## Changements de parti au Conseil fédéral — impact sur la composition des sources\n")
+    lines.append(
+        f"- {transitions.get('n_party_changes_total', 0)} changement(s) de parti détecté(s) "
+        f"entre 2000 et 2025 sur les 7 départements, dont {transitions.get('n_party_changes_in_range', 0)} "
+        f"recoupent la période couverte par les données (fenêtre ±{transitions.get('window_months', '?')} mois)."
+    )
+    if transitions.get("n_critiques_pooled_before", 0) > 0 or transitions.get("n_critiques_pooled_after", 0) > 0:
+        lines.append(f"- Critiques poolées sur tous les événements — avant : "
+                      f"{transitions['n_critiques_pooled_before']:,}, après : {transitions['n_critiques_pooled_after']:,}.")
+        if not np.isnan(transitions.get("chi2_party_p", np.nan)):
+            lines.append(f"- χ² composition partisane des sources parlementaires (avant vs après) : "
+                          f"χ²={transitions['chi2_party']:.2f}, p={transitions['chi2_party_p']:.4f}")
+        if not np.isnan(transitions.get("chi2_source_p", np.nan)):
+            lines.append(f"- χ² composition des catégories de source (avant vs après) : "
+                          f"χ²={transitions['chi2_source']:.2f}, p={transitions['chi2_source_p']:.4f}")
+        if not np.isnan(transitions.get("chi2_content_p", np.nan)):
+            lines.append(f"- χ² type de contenu (avant vs après) : "
+                          f"χ²={transitions['chi2_content']:.2f}, p={transitions['chi2_content_p']:.4f}")
+        lines.append("\n**Composition partisane des sources parlementaires, avant/après (%) :**\n")
+        lines.append(df_block(transitions["party_ct_pct"]))
+        lines.append("\n**Composition des catégories de source, avant/après (%) :**\n")
+        lines.append(df_block(transitions["source_ct_pct"]))
+        lines.append("\n**Type de contenu, avant/après (%) :**\n")
+        lines.append(df_block(transitions["content_ct_pct"]))
+        lines.append("\n**Détail par événement (changement de parti) :**\n")
+        lines.append(df_block(transitions["per_event_table"], max_rows=40))
+    else:
+        lines.append("_Pas assez de données pour comparer avant/après les changements de parti._")
+    lines.append("")
+
     lines.append("## E4 — Composition aux pics de pression\n")
     if crisis.get("n_crisis_periods_total", 0) > 0:
         lines.append(f"- {crisis['n_crisis_periods_total']} période(s)-département en régime de crise "
@@ -695,6 +876,8 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--output_dir", required=True)
     ap.add_argument("--granularity", default="M", help="pandas period frequency for temporal aggregation (M=month, W=week)")
     ap.add_argument("--crisis_k", type=float, default=2.0, help="crisis threshold = mean + k*std, per department")
+    ap.add_argument("--transition_window_months", type=int, default=6,
+                     help="months before/after a minister party-change to compare source composition")
     return ap.parse_args()
 
 
@@ -727,6 +910,9 @@ def main() -> int:
     sections["temporal"] = run_temporal(df_crit, df_source, out_dir / "temporal", args.granularity)
     sections["crosstabs"] = run_crosstabs(df_source, out_dir / "crosstabs")
     sections["alignment"] = run_partisan_alignment(df_source, out_dir / "partisan_alignment")
+    sections["transitions"] = run_minister_transitions(
+        df_crit, df_source, out_dir / "minister_transitions", args.transition_window_months
+    )
     sections["crisis"] = run_crisis_analysis(df_crit, df_source, out_dir / "crisis", args.granularity, args.crisis_k)
 
     report_path = out_dir / "analysis_report.md"

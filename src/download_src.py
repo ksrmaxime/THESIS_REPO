@@ -578,4 +578,8 @@ def run_pipeline(
         df_leads.to_csv(p_csv, index=False)
         out_paths["csv_all"] = p_csv
 
+    pointer_path = out_dir / ".last_download"
+    pointer_path.write_text(str(p_parquet), encoding="utf-8")
+    print(f"[Swissdox] pointer → {pointer_path} (-> {p_parquet})")
+
     return out_paths

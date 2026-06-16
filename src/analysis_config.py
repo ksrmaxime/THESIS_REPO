@@ -54,6 +54,41 @@ def minister_for_canonical_dept(dept_code: str, pubtime) -> str | None:
     return None
 
 
+def build_minister_transitions() -> list[dict]:
+    """Walk _COUNCIL_COMPOSITIONS chronologically and emit one record per
+    (canonical department, transition date) where the minister heading it
+    changes from the previous period — flagging whether the new minister
+    belongs to a different party than the outgoing one.
+    """
+    transitions: list[dict] = []
+    prev_by_dept: dict[str, str] = {}
+
+    for start, _end, comp in _COUNCIL_COMPOSITIONS:
+        canon_comp: dict[str, str] = {}
+        for raw_dept, name in comp.items():
+            canon = "DEFR/WBF" if raw_dept == "DFE/EVD" else raw_dept
+            canon_comp[canon] = name
+
+        for dept, name in canon_comp.items():
+            prev_name = prev_by_dept.get(dept)
+            if prev_name is not None and prev_name != name:
+                old_party = COUNCILLOR_PARTY.get(prev_name)
+                new_party = COUNCILLOR_PARTY.get(name)
+                transitions.append({
+                    "parent_dept": dept,
+                    "transition_date": start,
+                    "old_councillor": prev_name,
+                    "new_councillor": name,
+                    "old_party": old_party,
+                    "new_party": new_party,
+                    "is_party_change": old_party != new_party,
+                })
+
+        prev_by_dept = canon_comp
+
+    return transitions
+
+
 # ---------------------------------------------------------------------------
 # keyword (DEPARTMENTS, src/download_src.py) -> canonical department code
 # ---------------------------------------------------------------------------

@@ -43,5 +43,11 @@ python scripts/download.py \
 echo "Job finished."
 
 # ── Auto-chain ─────────────────────────────────────────────────────────────────
-sbatch "${REPO_DIR}/sbatch_tag_keywords.sh"
-echo "[chain] → sbatch_tag_keywords.sh submitted"
+DOWNLOAD_POINTER="${REPO_DIR}/data/input/.last_download"
+if [[ ! -f "$DOWNLOAD_POINTER" ]]; then
+    echo "[ERROR] Pointeur de download introuvable : ${DOWNLOAD_POINTER}" >&2
+    exit 1
+fi
+DOWNLOADED_FILE="$(cat "$DOWNLOAD_POINTER")"
+sbatch "${REPO_DIR}/sbatch_tag_keywords.sh" "${DOWNLOADED_FILE}"
+echo "[chain] → sbatch_tag_keywords.sh submitted (input: ${DOWNLOADED_FILE})"

@@ -34,16 +34,42 @@ which python
 export TMPDIR="/scratch/mkaiser3/tmp_${SLURM_JOB_ID}"
 mkdir -p "${TMPDIR}"
 
-# Tag all parquet/csv files in data/input/ that aren't already tagged.
-# Outputs are written alongside the originals with a _tagged suffix.
-# Use --outdir to redirect to a different directory if needed.
+# Usage:
+#   sbatch sbatch_tag_keywords.sh [<input_parquet_or_csv>]
+#
+# If the input path is omitted, falls back to the download pointer left by
+# sbatch_download.sh (data/input/.last_download). Output is written next to
+# the input with a "_tagged" suffix; --outdir redirects it if needed.
+INPUT=${1:-""}
+if [[ -z "$INPUT" ]]; then
+    DOWNLOAD_POINTER="${REPO_DIR}/data/input/.last_download"
+    if [[ -f "$DOWNLOAD_POINTER" ]]; then
+        INPUT="$(cat "$DOWNLOAD_POINTER")"
+        echo "[INFO] Pas d'input fourni — utilisation du dernier download: ${INPUT}"
+    else
+        echo "[ERROR] Pas d'input fourni et aucun pointeur ${DOWNLOAD_POINTER} trouvé." >&2
+        echo "[ERROR] Usage: sbatch sbatch_tag_keywords.sh <input_parquet_or_csv>" >&2
+        exit 1
+    fi
+fi
+
+if [[ ! -f "$INPUT" ]]; then
+    echo "[ERROR] Fichier introuvable : ${INPUT}" >&2
+    exit 1
+fi
+
 python scripts/tag_keywords.py \
-  --infile data/input/swissdox_2025.csv \
+  --infile "$INPUT" \
   --outdir data/input
 
 echo "Job finished."
 
 # ── Auto-chain ─────────────────────────────────────────────────────────────────
-TAGGED_FILE="${REPO_DIR}/data/input/swissdox_2025_tagged.csv"
+TAGGED_POINTER="${REPO_DIR}/data/input/.last_tagged"
+if [[ ! -f "$TAGGED_POINTER" ]]; then
+    echo "[ERROR] Pointeur de tagging introuvable : ${TAGGED_POINTER}" >&2
+    exit 1
+fi
+TAGGED_FILE="$(cat "$TAGGED_POINTER")"
 sbatch "${REPO_DIR}/sbatch_run3_array.sh" "${TAGGED_FILE}"
 echo "[chain] → sbatch_run3_array.sh submitted (input: ${TAGGED_FILE})"
