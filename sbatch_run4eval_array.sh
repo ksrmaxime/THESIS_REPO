@@ -1,4 +1,4 @@
-u#!/bin/bash -l
+#!/bin/bash -l
 #SBATCH --job-name=run4eval_array
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
