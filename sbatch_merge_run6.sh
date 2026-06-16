@@ -128,7 +128,11 @@ echo "  sbatch_array_used.sh / sbatch_merge_used.sh"
 echo "Merge terminé."
 echo "${RUN_DIR}" > "${WORKDIR}/data/output/.last_run6_archive"
 
-echo "=== PIPELINE COMPLET ==="
+# ── Auto-chain ─────────────────────────────────────────────────────────────────
+sbatch "${WORKDIR}/sbatch_analysis.sh" "${MERGED_PARQUET}"
+echo "[chain] → sbatch_analysis.sh submitted (input: ${MERGED_PARQUET})"
+
+echo "=== PIPELINE COMPLET (run3-run6) ==="
 echo "Résultat final : ${MERGED_CSV}"
 
 # =============================================================================

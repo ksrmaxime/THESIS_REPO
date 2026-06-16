@@ -9,6 +9,7 @@
 #   bash launch_pipeline.sh run4 /path/to/run3_merged.parquet
 #   bash launch_pipeline.sh run5 /path/to/run4_merged.parquet
 #   bash launch_pipeline.sh run6 /path/to/run5_standardized/results.parquet
+#   bash launch_pipeline.sh analysis /path/to/run6_merged/results.parquet
 #
 # Chaque étape soumet automatiquement la suivante via --dependency=afterok.
 # Un seul job actif à la fois — aucun superviseur, aucune limite de 3 jours.
@@ -79,9 +80,17 @@ case "$STEP" in
     fi
     echo "Pipeline lancé depuis : run6  (array job ${JOB_ID})"
     ;;
+  analysis)
+    if [[ -n "$INPUT" ]]; then
+        JOB_ID=$(sbatch --parsable "${WORKDIR}/sbatch_analysis.sh" "$INPUT")
+    else
+        JOB_ID=$(sbatch --parsable "${WORKDIR}/sbatch_analysis.sh")
+    fi
+    echo "Pipeline lancé depuis : analysis  (job ${JOB_ID})"
+    ;;
   *)
     echo "Étape inconnue : '$STEP'"
-    echo "Étapes valides : download | tag | run3 | run4 | run4arbitre | run5 | standardize | run6"
+    echo "Étapes valides : download | tag | run3 | run4 | run4arbitre | run5 | standardize | run6 | analysis"
     exit 1
     ;;
 esac
