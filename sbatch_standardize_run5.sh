@@ -2,7 +2,7 @@
 #SBATCH --job-name=std_run5
 #SBATCH --partition=cpu
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=8G
+#SBATCH --mem=32G
 #SBATCH --time=01:00:00
 #SBATCH --output=logs/std_run5_%j.out
 #SBATCH --error=logs/std_run5_%j.err
